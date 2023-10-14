@@ -1,3 +1,10 @@
 from django.contrib import admin
+from .models import S3Object
 
-# Register your models here.
+
+class S3ObjectAdmin(admin.ModelAdmin):
+    list_display = ['access_key', 'secret_key']
+    list_filter = ('access_key', 'secret_key')
+
+
+admin.site.register(S3Object, S3ObjectAdmin)

@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block title %}
+Bucket
+{% endblock %}
+
+{% block content %}
+<h1>Select Bucket</h1>
+{% for bucket in buckets %}
+{{bucket}}
+{% endfor %}
+
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Submit</button>
+</form>
+{% endblock %}
