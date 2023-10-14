@@ -30,6 +30,7 @@ local_settings.py
 # Ignore environment files
 .env
 .env.*
+.DS_Store
 
 # Ignore database migrations
 /migrations/
