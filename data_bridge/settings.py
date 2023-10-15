@@ -20,11 +20,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = config("SECRET_KEY")
-
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEBUG', default=False, cast=bool)
+
+SECRET_KEY = config("SECRET_KEY") if DEBUG else os.getenv('SECRET_KEY')
 
 ALLOWED_HOSTS = ["the-data-bridge-c59f00b20f6f.herokuapp.com", "localhost"]
 
@@ -133,7 +132,3 @@ MEDIA_URL = "media/"
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
-LOGIN_REDIRECT_URL = '/'
-
-LOGOUT_REDIRECT_URL = '/login'
