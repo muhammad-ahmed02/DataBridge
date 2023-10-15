@@ -1,14 +1,18 @@
 {% extends "base.html" %}
 
-{% block title %}Initialize{% endblock %}
+{% block title %}
+Folders
+{% endblock %}
 
 {% block content %}
-<h1>Hello from Data Bridge!</h1>
+<h1>Folders</h1>
+{% for folder in folders %}
+{{folder}}
+{% endfor %}
 
 <form method="post">
     {% csrf_token %}
     {{ form.as_p }}
     <button type="submit">Submit</button>
 </form>
-
 {% endblock %}

@@ -33,6 +33,7 @@ def bucket_view(request, obj_id):
         form = BucketForm(request.POST)
         if form.is_valid():
             obj.bucket_name = form.cleaned_data['bucket_name']
+            obj.extension = form.cleaned_data['extension']
             obj.save()
             if form.cleaned_data['type'].lower() == 'file':
                 redirect_url = reverse('aws:files', args=[obj.id])
@@ -54,7 +55,16 @@ def files_view(request, obj_id):
     for response in responses.get("Contents", []):
         files.append(response['Key'])
 
-    args = {'files': files}
+    if request.method == "POST":
+        form = FilesForm(request.POST)
+        if form.is_valid():
+            obj.file_name = form.cleaned_data['file_name']
+            obj.save()
+            return redirect(reverse('aws:files', args=[obj.id]))
+    else:
+        form = FilesForm()
+
+    args = {'form': form, 'files': files}
     return render(request, "aws/files.html", args)
 
 
@@ -67,5 +77,14 @@ def folders_view(request, obj_id):
     for response in responses.get("Contents", []):
         folders.append(response['Key'])
 
-    args = {'folders': folders}
+    if request.method == "POST":
+        form = FoldersForm(request.POST)
+        if form.is_valid():
+            obj.folder_name = form.cleaned_data['folder_name']
+            obj.save()
+            return redirect(reverse('aws:folder', args=[obj.id]))
+    else:
+        form = FoldersForm()
+
+    args = {'form': form, 'folders': folders}
     return render(request, "aws/folders.html", args)
