@@ -5,14 +5,32 @@ Bucket
 {% endblock %}
 
 {% block content %}
-<h1>Select Bucket</h1>
-{% for bucket in buckets %}
-{{bucket}}
-{% endfor %}
-
-<form method="post">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit">Submit</button>
-</form>
+<div class="container-fluid" style="height: 100vh">
+    <div class="row h-100">
+        <div class="col-lg-6 bg-dark text-white d-flex align-items-center justify-content-center">
+            <h1>Welcome to DataBridge</h1>
+        </div>
+        <div class="col-lg-6 bg-light d-flex align-items-center justify-content-center">
+            <div class="container">
+                <h2 class="mb-4">Select Bucket</h2>
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="bucket_name" class="form-label">Bucket Name:</label>
+                        {{form.bucket_name}}
+                    </div>
+                    <div class="mb-3">
+                        <label for="type" class="form-label">Type:</label>
+                        {{form.type}}
+                    </div>
+                    <div class="mb-3">
+                        <label for="type" class="form-label">Extension:</label>
+                        {{form.extension}}
+                    </div>
+                    <button type="submit" class="btn btn-secondary w-25">Start</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}

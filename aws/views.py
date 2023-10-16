@@ -27,12 +27,12 @@ def bucket_view(request, obj_id):
     obj = S3Object.objects.get(id=obj_id)
     s3_client = bt.client('s3', aws_access_key_id=obj.access_key, aws_secret_access_key=obj.secret_key)
     response = s3_client.list_buckets()
-    buckets = [bucket['Name'] for bucket in response['Buckets']]
+    buckets = [(str(bucket['Name'].lower()), str(bucket['Name'])) for bucket in response['Buckets']]
 
     if request.method == "POST":
         form = BucketForm(request.POST)
         if form.is_valid():
-            obj.bucket_name = form.cleaned_data['bucket_name']
+            obj.bucket_name = str(form.cleaned_data['bucket_name'])
             obj.extension = form.cleaned_data['extension']
             obj.save()
             if form.cleaned_data['type'].lower() == 'file':
@@ -42,7 +42,8 @@ def bucket_view(request, obj_id):
             return redirect(redirect_url)
     else:
         form = BucketForm()
-    args = {'form': form, 'buckets': buckets}
+        form.set_choices(buckets)
+    args = {'form': form}
     return render(request, "aws/bucket.html", args)
 
 
