@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import S3Object
+from .models import S3Object, TypeModel, Extension
 
 
 class S3ObjectAdmin(admin.ModelAdmin):
@@ -8,3 +8,5 @@ class S3ObjectAdmin(admin.ModelAdmin):
 
 
 admin.site.register(S3Object, S3ObjectAdmin)
+admin.site.register(TypeModel)
+admin.site.register(Extension)

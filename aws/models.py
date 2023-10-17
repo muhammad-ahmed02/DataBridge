@@ -10,3 +10,17 @@ class S3Object(models.Model):
 
     def __str__(self):
         return self.access_key
+
+
+class TypeModel(models.Model):
+    name = models.CharField(max_length=32)
+
+    def __str__(self):
+        return self.name
+
+
+class Extension(models.Model):
+    name = models.CharField(max_length=32)
+
+    def __str__(self):
+        return self.name

@@ -31,18 +31,22 @@ def bucket_view(request, obj_id):
 
     if request.method == "POST":
         form = BucketForm(request.POST)
+        form.set_buckets(buckets)
         if form.is_valid():
             obj.bucket_name = str(form.cleaned_data['bucket_name'])
             obj.extension = form.cleaned_data['extension']
             obj.save()
-            if form.cleaned_data['type'].lower() == 'file':
+            if str(form.cleaned_data['type']).lower() == 'file':
                 redirect_url = reverse('aws:files', args=[obj.id])
             else:
                 redirect_url = reverse('aws:folders', args=[obj.id])
             return redirect(redirect_url)
+        else:
+            errors = form.errors
+            return render(request, 'aws/bucket.html', {'form': form, 'errors': errors})
     else:
         form = BucketForm()
-        form.set_choices(buckets)
+        form.set_buckets(buckets)
     args = {'form': form}
     return render(request, "aws/bucket.html", args)
 

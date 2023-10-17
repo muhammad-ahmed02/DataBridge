@@ -1,6 +1,5 @@
 from django import forms
-from .models import S3Object
-import boto3 as bt
+from .models import TypeModel, Extension
 
 
 class InitializeForm(forms.Form):
@@ -18,34 +17,22 @@ class InitializeForm(forms.Form):
     ))
 
 
-type_choices = [
-    ('file', 'File'),
-    ('folder', 'Folder')
-]
-extensions = [
-    ('txt', 'Text'),
-    ('xlsx', 'Excel'),
-    ('csv', 'CSV'),
-    ('xml', 'XML'),
-    ('json', 'JSON'),
-    ('avro', 'AVRO'),
-    ('parquet', 'PARQUET')
-]
-
-
 class BucketForm(forms.Form):
-    bucket_name = forms.ChoiceField(label='Bucket Name',
+    bucket_name = forms.ChoiceField(label='Bucket Name:',
                                     choices=[],
                                     widget=forms.Select(attrs={'class': 'form-select'}))
-    type = forms.ChoiceField(label="File/Folder",
-                             choices=type_choices,
-                             widget=forms.RadioSelect(attrs={'class': 'form-check'}))
-    extension = forms.ChoiceField(label="Extension",
-                                  choices=extensions,
-                                  widget=forms.Select(attrs={'class': 'form-select'}),
-                                  required=False)
+    type = forms.ModelChoiceField(label="File/Folder:",
+                                  queryset=TypeModel.objects.all(),
+                                  to_field_name='name',
+                                  widget=forms.RadioSelect(attrs={'div_class': 'form-check',
+                                                                  'input_class': 'form-check-input'}))
+    extension = forms.ModelChoiceField(label="Extension:",
+                                       queryset=Extension.objects.all(),
+                                       to_field_name='name',
+                                       widget=forms.Select(attrs={'class': 'form-select'}),
+                                       required=False)
 
-    def set_choices(self, choices):
+    def set_buckets(self, choices):
         self.fields['bucket_name'].choices = choices
 
 
