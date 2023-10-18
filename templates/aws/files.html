@@ -5,14 +5,69 @@ Files
 {% endblock %}
 
 {% block content %}
-<h1>Files</h1>
-{% for file in files %}
-{{file}}
-{% endfor %}
+<div class="container-fluid" style="height: 100vh">
+    <div class="d-flex row h-100 bg-dark p-5">
+        <div class="col-md-2 w-100">
+            <h1 class="text-light">Files</h1>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="/" class="text-info">Start</a></li>
+                    <li class="breadcrumb-item"><a href="/{{obj.id}}/bucket" class="text-info">Buckets</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Files</li>
+                </ol>
+            </nav>
+        </div>
+        <div class="col-md-10 bg-light w-100 rounded">
+            <div class="row">
+                <div class="col-md-8 p-3">
+                    <h2 class="mb-4">Select File</h2>
+                    <!-- Left Side: List of Radio Selects -->
+                    <form method="post">
+                        {% csrf_token %}
+                        {{ form.as_p }}
+                        {% if errors %}
+                        <ul>
+                            {% for field, error_list in errors.items %}
+                            <li>{{ field }}:
+                                <ul>
+                                    {% for error in error_list %}
+                                    <li>{{ error }}</li>
+                                    {% endfor %}
+                                </ul>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                        {% endif %}
+                        <button type="submit" class="btn btn-primary w-25">Get Schema</button>
+                    </form>
+                </div>
+                <div class="col-md-4 border-start border-1 border-success border-opacity-50 p-3">
+                    <!-- Right Side: Empty Space to Display Data -->
+                    <div id="displayData">
+                        <!-- Data will be displayed here later -->
+                        <h2 class="mb-4">Schema</h2>
+                        <table class="table">
+                          <thead>
+                            <tr>
+                              <th scope="col">Column</th>
+                              <th scope="col">DataType</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {% for object in schema %}
+                                <tr>
+                                  <td>{{object.column}}</td>
+                                  <td>{{object.datatype}}</td>
+                                </tr>
+                            {% endfor %}
 
-<form method="post">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit">Submit</button>
-</form>
+                          </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
 {% endblock %}

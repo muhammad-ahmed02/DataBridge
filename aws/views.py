@@ -1,8 +1,7 @@
 from django.shortcuts import render, redirect, reverse
-from django.views.generic import FormView
 from .forms import *
 from .models import S3Object
-
+from .utils import *
 import boto3 as bt
 
 
@@ -34,12 +33,12 @@ def bucket_view(request, obj_id):
         form.set_buckets(buckets)
         if form.is_valid():
             obj.bucket_name = str(form.cleaned_data['bucket_name'])
-            obj.extension = form.cleaned_data['extension']
-            obj.save()
             if str(form.cleaned_data['type']).lower() == 'file':
+                obj.extension = str(form.cleaned_data['extension'].ext)
                 redirect_url = reverse('aws:files', args=[obj.id])
             else:
                 redirect_url = reverse('aws:folders', args=[obj.id])
+            obj.save()
             return redirect(redirect_url)
         else:
             errors = form.errors
@@ -58,18 +57,31 @@ def files_view(request, obj_id):
 
     files = list()
     for response in responses.get("Contents", []):
-        files.append(response['Key'])
+        var = response["Key"]
+        var_parts = var.split("/")
+        if len(var_parts) > 1:
+            continue
+        else:
+            if var.endswith(obj.extension):
+                files.append(make_tuple(var, size=response['Size']))
 
     if request.method == "POST":
         form = FilesForm(request.POST)
+        form.set_files(files)
         if form.is_valid():
-            obj.file_name = form.cleaned_data['file_name']
+            table = form.cleaned_data['file_name']
+            obj.file_name = table
             obj.save()
-            return redirect(reverse('aws:files', args=[obj.id]))
+            df = get_file_df(con=s3_client, bucket=obj.bucket_name, table=table)
+            schema = get_schema(df=df)
+            return render(request, "aws/files.html", {'form': form, 'obj': obj, 'schema': schema})
+        else:
+            errors = form.errors
+            return render(request, "aws/files.html", {'form': form, 'errors': errors, 'obj': obj})
     else:
         form = FilesForm()
-
-    args = {'form': form, 'files': files}
+        form.set_files(files)
+    args = {'form': form, 'obj': obj}
     return render(request, "aws/files.html", args)
 
 
@@ -80,16 +92,40 @@ def folders_view(request, obj_id):
 
     folders = list()
     for response in responses.get("Contents", []):
-        folders.append(response['Key'])
+        var = response["Key"]
+        var_parts = var.split("/")
+        if len(var_parts) > 1:
+            # Get the top-level folder
+            if not has_special_characters(var_parts[0]):
+                top_level_folder = var_parts[0]
+
+                # Add the top-level folder name to the set
+                folder = make_tuple(str(top_level_folder), size=response['Size'])
+                folders.append(
+                    folder
+                ) if folder not in folders else None
 
     if request.method == "POST":
         form = FoldersForm(request.POST)
+        form.set_folders(folders)
         if form.is_valid():
-            obj.folder_name = form.cleaned_data['folder_name']
+            folder = form.cleaned_data['folder_name']
+            obj.folder_name = folder
             obj.save()
-            return redirect(reverse('aws:folder', args=[obj.id]))
+            schema = list()
+            files = s3_client.list_objects_v2(Bucket=obj.bucket_name, Prefix=folder)
+            for file in sorted(files.get("Contents", []), key=lambda x: x['LastModified']):
+                if file['Key'].endswith(obj.extension):
+                    df = get_file_df(s3_client, bucket=obj.bucket_name, table=file['Key'])
+                    schema = get_schema(df)
+                    break
+
+            return render(request, "aws/folders.html", {'form': form, 'obj': obj, 'schema': schema})
+        else:
+            errors = form.errors
+            return render(request, "aws/folders.html", {'form': form, 'errors': errors})
     else:
         form = FoldersForm()
-
-    args = {'form': form, 'folders': folders}
+        form.set_folders(folders)
+    args = {'form': form, 'obj': obj}
     return render(request, "aws/folders.html", args)

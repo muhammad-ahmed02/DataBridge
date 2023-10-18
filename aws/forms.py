@@ -28,17 +28,28 @@ class BucketForm(forms.Form):
                                                                   'input_class': 'form-check-input'}))
     extension = forms.ModelChoiceField(label="Extension:",
                                        queryset=Extension.objects.all(),
-                                       to_field_name='name',
-                                       widget=forms.Select(attrs={'class': 'form-select'}),
-                                       required=False)
+                                       to_field_name='ext',
+                                       widget=forms.Select(attrs={'class': 'form-select'}))
 
     def set_buckets(self, choices):
         self.fields['bucket_name'].choices = choices
 
 
 class FilesForm(forms.Form):
-    file_name = forms.CharField(label='File Name')
+    file_name = forms.ChoiceField(label='File Name:',
+                                  choices=[],
+                                  widget=forms.RadioSelect(attrs={'div_class': 'form-check',
+                                                                  'input_class': 'form-check-input'}))
+
+    def set_files(self, choices):
+        self.fields['file_name'].choices = choices
 
 
 class FoldersForm(forms.Form):
-    folder_name = forms.CharField(label="Folder Name")
+    folder_name = forms.ChoiceField(label="Folder Name:",
+                                    choices=[],
+                                    widget=forms.RadioSelect(attrs={'div_class': 'form-check',
+                                                                    'input_class': 'form-check-input'}))
+
+    def set_folders(self, choices):
+        self.fields['folder_name'].choices = choices

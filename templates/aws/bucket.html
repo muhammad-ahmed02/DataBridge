@@ -13,6 +13,12 @@ Bucket
         <div class="col-lg-6 bg-light d-flex align-items-center justify-content-center">
             <div class="container">
                 <h2 class="mb-4">Select Bucket</h2>
+                <nav aria-label="breadcrumb">
+                  <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="/">Start</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Buckets</li>
+                  </ol>
+                </nav>
                 <form method="post">
                     {% csrf_token %}
                     <div class="mb-3">
@@ -46,3 +52,18 @@ Bucket
     </div>
 </div>
 {% endblock %}
+
+
+<script>
+    $(document).ready(function() {
+        $('#id_type').on('input', function() {
+            if ($('#id_type_0')[0].checked) {
+                $('#id_extension').show();
+                $("label[for='id_extension']").show();
+            } else {
+                $('#id_extension').hide();
+                $("label[for='id_extension']").hide();
+            }
+        });
+    });
+</script>
