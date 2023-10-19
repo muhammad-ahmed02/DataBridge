@@ -1,6 +1,8 @@
 import io
 import pandas as pd
 import re
+import fastavro
+from fastparquet import ParquetFile
 
 
 def has_special_characters(string: str):
@@ -15,19 +17,32 @@ def convert_bytes(byte_size):
     # Conversion factors
     KB = 1024
     MB = 1024 * KB
+    GB = 1024 * MB
 
     if byte_size < KB:
         return f"{byte_size} bytes"
     elif byte_size < MB:
         kb_size = byte_size / KB
         return f"{kb_size:.2f} KB"
-    else:
+    elif byte_size < GB:
         mb_size = byte_size / MB
         return f"{mb_size:.2f} MB"
+    else:
+        gb_size = byte_size / GB
+        return f"{gb_size:.2f} GB"
 
 
 def make_tuple(string: str, size=None):
-    return string, string + f" | Size: {convert_bytes(size)}" if size else ""
+    return string, string + f"{' | Size: '+convert_bytes(size) if size else ''}"
+
+
+def check_unique_tuple(new_tuple, tuple_list):
+    new_tuple_first_element = new_tuple[0]
+    existing_first_elements = {t[0] for t in tuple_list}
+
+    if new_tuple_first_element not in existing_first_elements:
+        return True
+    return False
 
 
 def format_df(df: pd.DataFrame):
@@ -45,6 +60,23 @@ def get_file_df(con, bucket, table):
         df = pd.read_csv(io.BytesIO(data))
     elif ".xlsx" in table:
         df = pd.read_excel(io.BytesIO(data))
+    elif ".json" in table:
+        df = pd.read_json(io.BytesIO(data))
+    elif ".xml" in table:
+        df = pd.read_xml(io.BytesIO(data))
+    elif ".parquet" in table:
+        pf = ParquetFile(data)
+        df = pf.to_pandas()
+    elif ".html" in table:
+        df = pd.read_html(data)
+    elif ".avro" in table:
+        # Open the Avro file and read it as a Pandas DataFrame
+        with open(data, 'rb') as avro_file:
+            avro_reader = fastavro.reader(avro_file)
+            avro_data = list(avro_reader)
+
+        # Convert the Avro data to a Pandas DataFrame
+        df = pd.DataFrame(avro_data)
     else:
         df = pd.DataFrame()
     df = format_df(df)

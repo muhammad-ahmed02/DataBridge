@@ -21,3 +21,6 @@ tzdata==2023.3
 urllib3==2.0.6
 whitenoise==6.6.0
 openpyxl==3.1.2
+fastavro==1.8.4
+fastparquet==2023.8.0
+lxml==4.9.3

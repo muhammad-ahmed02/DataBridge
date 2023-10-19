@@ -100,10 +100,10 @@ def folders_view(request, obj_id):
                 top_level_folder = var_parts[0]
 
                 # Add the top-level folder name to the set
-                folder = make_tuple(str(top_level_folder), size=response['Size'])
-                folders.append(
-                    folder
-                ) if folder not in folders else None
+
+                new_folder = make_tuple(str(top_level_folder), size=response['Size'])
+                if check_unique_tuple(new_folder, folders):
+                    folders.append(new_folder)
 
     if request.method == "POST":
         form = FoldersForm(request.POST)
