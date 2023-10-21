@@ -15,10 +15,6 @@ data_bridge/.env
 # Ignore database files
 #db.sqlite3
 
-# Ignore static and media files
-/static/
-/media/
-
 # Ignore log files
 *.log
 
