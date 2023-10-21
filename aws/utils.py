@@ -1,4 +1,6 @@
 import io
+import os
+
 import pandas as pd
 import re
 import fastavro
@@ -55,6 +57,9 @@ def format_df(df: pd.DataFrame):
 
 def get_file_df(con, bucket, table):
     response = con.get_object(Bucket=bucket, Key=table)
+    size = response['ContentLength']
+    if size > (1024*1024):
+        return False, "File too large to get schema! Try with files less than 1MB"
     data = response['Body'].read()
     if ".csv" in table:
         df = pd.read_csv(io.BytesIO(data))
@@ -70,17 +75,18 @@ def get_file_df(con, bucket, table):
     elif ".html" in table:
         df = pd.read_html(data)
     elif ".avro" in table:
+        con.download_file(bucket, table, table)
         # Open the Avro file and read it as a Pandas DataFrame
-        with open(data, 'rb') as avro_file:
+        with open(table, 'rb') as avro_file:
             avro_reader = fastavro.reader(avro_file)
             avro_data = list(avro_reader)
-
         # Convert the Avro data to a Pandas DataFrame
         df = pd.DataFrame(avro_data)
+        os.remove(table)
     else:
         df = pd.DataFrame()
     df = format_df(df)
-    return df
+    return True, df
 
 
 def checkdtype(val):
@@ -100,7 +106,8 @@ def checkdtype(val):
     return datatype
 
 
-def get_schema(df: pd.DataFrame) -> list:
+def get_schema(df: pd.DataFrame, table: str) -> dict:
+    schema = dict()
     columns_list = list()
 
     for col in df.columns:
@@ -109,4 +116,5 @@ def get_schema(df: pd.DataFrame) -> list:
         column["datatype"] = checkdtype(df[col].dtype)
         columns_list.append(column)
 
-    return columns_list
+    schema[table] = columns_list
+    return schema

@@ -20,16 +20,16 @@ Folders
             </div>
             <div class="col-md-4 text-end">
                 <h1>
-                    <span class="badge bg-secondary">{{obj.extension}}</span>
+                    {{extension_form.as_p}}
                 </h1>
             </div>
         </div>
     </div>
     <div class="col-md-10 bg-light w-100 rounded">
-        <div class="row">
-            <div class="col-md-8 p-3">
-                <h2 class="mb-4">Select Folder</h2>
-                <form method="post">
+        <form method="post">
+            <div class="row">
+                <div class="col-md-8 p-3">
+                    <h2 class="mb-4">Select Folder</h2>
                     {% csrf_token %}
                     {{ form.as_p }}
                     {% if errors %}
@@ -45,33 +45,44 @@ Folders
                         {% endfor %}
                     </ul>
                     {% endif %}
-                    <button type="submit" class="btn btn-primary w-25">Get Schema</button>
-                </form>
-            </div>
-            <div class="col-md-4 border-start border-1 border-success border-opacity-50 p-3">
-                <!-- Right Side: Empty Space to Display Data -->
-                <div id="displayData">
-                    <!-- Data will be displayed here later -->
-                    <h2 class="mb-4">Schema</h2>
-                    <table class="table">
-                      <thead>
-                        <tr>
-                          <th scope="col">Column</th>
-                          <th scope="col">DataType</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {% for object in schema %}
-                            <tr>
-                              <td>{{object.column}}</td>
-                              <td>{{object.datatype}}</td>
-                            </tr>
-                        {% endfor %}
-                      </tbody>
-                    </table>
+                    <button type="submit" class="btn btn-primary w-25" name="get_schema" value="get_schema">Get Schema</button>
+                </div>
+                <div class="col-md-4 border-start border-1 border-success border-opacity-50 p-3">
+                    <!-- Right Side: Empty Space to Display Data -->
+                    <div id="displayData">
+                        <!-- Data will be displayed here later -->
+                        <h2 class="mb-4">Schema</h2>
+                        {% if error %}
+                        <div class="alert alert-danger" role="alert">
+                            {{ error }}
+                        </div>
+                        {% endif %}
+                        {% if schema %}
+                            {% for file, columns in schema.items %}
+                                <h5>{{file}}</h5>
+                                <table class="table">
+                                  <thead>
+                                    <tr>
+                                      <th scope="col">Column</th>
+                                      <th scope="col">DataType</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    {% for column in columns %}
+                                        <tr>
+                                            <td>{{ column.column }}</td>
+                                            <td>{{ column.datatype }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                  </tbody>
+                                </table>
+                                <button type="submit" class="btn btn-secondary" name="export_schema" value="export_schema">Export Schema</button>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
                 </div>
             </div>
-        </div>
+        </form>
     </div>
 </div>
 {% endblock %}

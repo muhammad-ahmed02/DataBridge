@@ -21,10 +21,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = config('DEBUG', default=False, cast=bool)
-
-SECRET_KEY = config("SECRET_KEY") if DEBUG else os.getenv('SECRET_KEY')
-
+# DEBUG = config('DEBUG', default=False, cast=bool)
+DEBUG = True
+# SECRET_KEY = config("SECRET_KEY") if DEBUG else os.getenv('SECRET_KEY')
+SECRET_KEY = os.getenv('SECRET_KEY')
 ALLOWED_HOSTS = ["the-data-bridge-c59f00b20f6f.herokuapp.com", "localhost"]
 
 
@@ -75,15 +75,15 @@ WSGI_APPLICATION = 'data_bridge.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
-if DEBUG:
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
-        }
-    }
-else:
-    django_on_heroku.settings(locals())
+# if DEBUG:
+#     DATABASES = {
+#         'default': {
+#             'ENGINE': 'django.db.backends.sqlite3',
+#             'NAME': BASE_DIR / 'db.sqlite3',
+#         }
+#     }
+# else:
+django_on_heroku.settings(locals())
 
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators

@@ -53,3 +53,11 @@ class FoldersForm(forms.Form):
 
     def set_folders(self, choices):
         self.fields['folder_name'].choices = choices
+
+
+class ExtensionSelect(forms.Form):
+    ext = forms.ModelChoiceField(label="Extension:",
+                                 queryset=Extension.objects.all(),
+                                 to_field_name='ext',
+                                 widget=forms.Select(attrs={'class': 'badge bg-secondary',
+                                                            'onchange': 'this.form.submit();'}))
