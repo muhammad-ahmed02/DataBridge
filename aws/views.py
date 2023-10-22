@@ -12,6 +12,9 @@ from .utils import *
 
 
 def init_view(request):
+    """
+    View includes page for getting S3 Access and Secret Key to initialize the further operations.
+    """
     if request.method == 'POST':
         form = InitializeForm(request.POST)
         if form.is_valid():
@@ -29,6 +32,10 @@ def init_view(request):
 
 
 def bucket_view(request, obj_id):
+    """
+    View to save bucket name from the input of user into S3Object and performing further operations.
+    returns: List buckets from S3 User given in InitView.
+    """
     obj = S3Object.objects.get(id=obj_id)
     s3_client = bt.client('s3', aws_access_key_id=obj.access_key, aws_secret_access_key=obj.secret_key)
     response = s3_client.list_buckets()
@@ -58,6 +65,9 @@ def bucket_view(request, obj_id):
 
 
 def find_files_in_s3(con, bucket, ext) -> list:
+    """
+    Function to get list of files in a bucket given from S3.
+    """
     responses = con.list_objects_v2(Bucket=bucket)
 
     files = list()
@@ -73,6 +83,9 @@ def find_files_in_s3(con, bucket, ext) -> list:
 
 
 def create_zip_folder(files_path: list, files_name: list, folder_name=None) -> str:
+    """
+    creating zip folder of given files in media folder.
+    """
     default_zip_folder_name = 'file.zip'
     zip_folder_name = folder_name+".zip" if folder_name else default_zip_folder_name
     zip_file = zipfile.ZipFile(os.path.join(MEDIA_ROOT, zip_folder_name), 'w')
@@ -85,6 +98,9 @@ def create_zip_folder(files_path: list, files_name: list, folder_name=None) -> s
 
 
 def files_view(request, obj_id):
+    """
+    View for files display from S3 bucket selected in BucketView.
+    """
     obj = S3Object.objects.get(id=obj_id)
     s3_client = bt.client('s3', aws_access_key_id=obj.access_key, aws_secret_access_key=obj.secret_key)
     files = find_files_in_s3(s3_client, obj.bucket_name, obj.extension)
@@ -141,6 +157,9 @@ def files_view(request, obj_id):
                 os.remove(os.path.join(MEDIA_ROOT, zip_folder))
                 # Return the response
                 return response
+            elif "write_to_target" in request.POST:
+                redirect_url = reverse('aws:target', args=[obj.id, "files"])
+                return redirect(redirect_url)
         else:
             errors = form.errors
             return render(request, "aws/files.html",
@@ -155,6 +174,10 @@ def files_view(request, obj_id):
 
 
 def find_folder_in_s3(con, bucket, table, ext) -> tuple:
+    """
+    Function to read schema of desired folder.
+        Schema will be read for the specific file in the folder matching the extension given.
+    """
     files = con.list_objects_v2(Bucket=bucket, Prefix=table)
     for file in sorted(files.get("Contents", []), key=lambda x: x['LastModified']):
         if file['Key'].endswith(ext):
@@ -225,6 +248,9 @@ def folders_view(request, obj_id):
                 os.remove(folder_path)
                 # Return the response
                 return response
+            elif "write_to_target" in request.POST:
+                redirect_url = reverse('aws:target', args=[obj.id, "folders"])
+                return redirect(redirect_url)
         else:
             errors = form.errors
             return render(request, "aws/folders.html", {'form': form, 'errors': errors})
@@ -233,3 +259,17 @@ def folders_view(request, obj_id):
         form.set_folders(folders)
     args = {'form': form, 'obj': obj}
     return render(request, "aws/folders.html", args)
+
+
+def target_view(request, obj_id, types):
+    s3_obj = S3Object.objects.get(id=obj_id)
+    if request.method == 'POST':
+        form = TargetForm(request.POST)
+        if form.is_valid():
+            # Process the form data
+            obj = form.save()
+
+    else:
+        form = TargetForm()
+    args = {'form': form, 'types': types, 'obj': s3_obj}
+    return render(request, 'aws/target.html', args)

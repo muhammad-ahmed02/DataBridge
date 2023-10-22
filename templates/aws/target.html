@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+
+{% block title %}
+Select Target
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid d-flex row bg-dark p-5">
+    <div class="col-md-2 w-100">
+        <h1 class="text-light">Select Target</h1>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="/" class="text-info">Start</a></li>
+                <li class="breadcrumb-item"><a href="/{{obj.id}}/bucket" class="text-info">Buckets</a></li>
+                <li class="breadcrumb-item"><a href="/{{obj.id}}/{{types}}" class="text-info">{% if types == 'files'%}Files{% else %}Folders{% endif %}</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Target</li>
+            </ol>
+        </nav>
+    </div>
+    <div class="col-md-10 bg-light w-100 rounded p-3">
+        <form method="post">
+            <h2 class="mb-4">Enter Snowflake Target Configurations</h2>
+            {% csrf_token %}
+            {{form.as_p}}
+            <button type="submit" class="btn btn-primary w-25">Submit</button>
+        </form>
+    </div>
+</div>
+
+{% endblock %}

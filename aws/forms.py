@@ -1,5 +1,5 @@
 from django import forms
-from .models import TypeModel, Extension
+from .models import TypeModel, Extension, SnowflakeObject
 
 
 class InitializeForm(forms.Form):
@@ -61,3 +61,21 @@ class ExtensionSelect(forms.Form):
                                  to_field_name='ext',
                                  widget=forms.Select(attrs={'class': 'badge bg-secondary',
                                                             'onchange': 'this.form.submit();'}))
+
+
+class TargetForm(forms.ModelForm):
+    class Meta:
+        model = SnowflakeObject
+        fields = ['sfUrl', 'sfAccount', 'sfUser', 'sfPassword',
+                  'sfDatabase', 'sfSchema', 'sfWarehouse', 'dbTable']
+
+        widgets = {
+            'sfUrl': forms.TextInput(attrs={'class': 'form-control', 'placeholder': "Snowflake Url"}),
+            'sfAccount': forms.TextInput(attrs={'class': 'form-control', 'placeholder': "Account name"}),
+            'sfUser': forms.TextInput(attrs={'class': 'form-control', 'placeholder': "Username"}),
+            'sfPassword': forms.TextInput(attrs={'class': 'form-control', 'placeholder': "Password"}),
+            'sfDatabase': forms.TextInput(attrs={'class': 'form-control', 'placeholder': "Database"}),
+            'sfSchema': forms.TextInput(attrs={'class': 'form-control', 'placeholder': "Schema"}),
+            'sfWarehouse': forms.TextInput(attrs={'class': 'form-control', 'placeholder': "Warehouse"}),
+            'dbTable': forms.TextInput(attrs={'class': 'form-control', 'placeholder': "Database Table"})
+        }

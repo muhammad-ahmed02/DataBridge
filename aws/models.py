@@ -1,6 +1,21 @@
 from django.db import models
 
 
+class SnowflakeObject(models.Model):
+    sfUrl = models.CharField(max_length=255)
+    sfAccount = models.CharField(max_length=255)
+    sfUser = models.CharField(max_length=255)
+    sfPassword = models.CharField(max_length=255)
+    sfDatabase = models.CharField(max_length=255)
+    sfSchema = models.CharField(max_length=255)
+    sfWarehouse = models.CharField(max_length=255)
+
+    dbTable = models.CharField(max_length=255, blank=True, null=True)
+
+    def __str__(self):
+        return self.sfAccount
+
+
 class S3Object(models.Model):
     access_key = models.CharField(max_length=255)
     secret_key = models.CharField(max_length=255)
