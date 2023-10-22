@@ -20,10 +20,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: don't run with debug turned on in production!
-try:
-    DEBUG = config('DEBUG', default=False, cast=bool)
-except Exception as e:
-    DEBUG = False
+# DEBUG = config('DEBUG', default=False, cast=bool)
+DEBUG = False
 
 SECRET_KEY = config("SECRET_KEY") if DEBUG else os.getenv('SECRET_KEY')
 
