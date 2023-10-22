@@ -1,9 +1,14 @@
+import os
+
 from django.shortcuts import render, redirect, reverse
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
+import boto3 as bt
+import zipfile
+
+from data_bridge.settings import MEDIA_ROOT
 from .forms import *
 from .models import S3Object
 from .utils import *
-import boto3 as bt
 
 
 def init_view(request):
@@ -67,6 +72,18 @@ def find_files_in_s3(con, bucket, ext) -> list:
     return files
 
 
+def create_zip_folder(files_path: list, files_name: list, folder_name=None) -> str:
+    default_zip_folder_name = 'file.zip'
+    zip_folder_name = folder_name+".zip" if folder_name else default_zip_folder_name
+    zip_file = zipfile.ZipFile(os.path.join(MEDIA_ROOT, zip_folder_name), 'w')
+
+    for path, name in zip(files_path, files_name):
+        zip_file.write(path, name)
+
+    zip_file.close()
+    return zip_folder_name
+
+
 def files_view(request, obj_id):
     obj = S3Object.objects.get(id=obj_id)
     s3_client = bt.client('s3', aws_access_key_id=obj.access_key, aws_secret_access_key=obj.secret_key)
@@ -93,9 +110,10 @@ def files_view(request, obj_id):
             table = form.cleaned_data['file_name']
             obj.file_name = table
             obj.save()
-            cond, df = get_file_df(con=s3_client, bucket=obj.bucket_name, table=table)
-            schema = get_schema(df, table) if cond else "None"
+
             if 'get_schema' in request.POST:
+                cond, df = get_file_df(con=s3_client, bucket=obj.bucket_name, table=table)
+                schema = get_schema(df, table) if cond else "None"
                 if cond:
                     return render(request, "aws/files.html",
                                   {'form': form, 'extension_form': extension_form, 'obj': obj, 'schema': schema})
@@ -104,10 +122,25 @@ def files_view(request, obj_id):
                     return render(request, "aws/files.html",
                                   {"form": form, 'extension_form': extension_form, 'obj': obj, 'error': error})
             elif "export_schema" in request.POST:
+                cond, df = get_file_df(con=s3_client, bucket=obj.bucket_name, table=table)
+                schema = get_schema(df, table) if cond else "None"
                 if cond:
                     response = JsonResponse(schema)
                     response['Content-Disposition'] = 'attachment; filename="schema.json"'
                     return response
+            elif "download" in request.POST:
+                file_path = os.path.join(MEDIA_ROOT, table)
+                s3_client.download_file(obj.bucket_name, table, file_path)
+                zip_folder = create_zip_folder([file_path], [table])
+                response = HttpResponse(content_type='application/zip')
+                response['Content-Disposition'] = f'attachment; filename="{zip_folder}"'
+                # Write the zip file data to the response
+                with open(os.path.join(MEDIA_ROOT, zip_folder), 'rb') as file:
+                    response.write(file.read())
+                os.remove(file_path)
+                os.remove(os.path.join(MEDIA_ROOT, zip_folder))
+                # Return the response
+                return response
         else:
             errors = form.errors
             return render(request, "aws/files.html",
@@ -157,18 +190,41 @@ def folders_view(request, obj_id):
             folder = form.cleaned_data['folder_name']
             obj.folder_name = folder
             obj.save()
-            cond, schema = find_folder_in_s3(s3_client, obj.bucket_name, folder, obj.extension)
             if 'get_schema' in request.POST:
+                cond, schema = find_folder_in_s3(s3_client, obj.bucket_name, folder, obj.extension)
                 if cond:
                     return render(request, "aws/folders.html",
                                   {'form': form, 'obj': obj, 'schema': schema})
                 error = schema
                 return render(request, "aws/folders.html", {'form': form, 'obj': obj, 'error': error})
             elif "export_schema" in request.POST:
+                cond, schema = find_folder_in_s3(s3_client, obj.bucket_name, folder, obj.extension)
                 if cond:
                     response = JsonResponse(schema)
                     response['Content-Disposition'] = 'attachment; filename="schema.json"'
                     return response
+            elif "download" in request.POST:
+                # download folder from s3 and create zip file and return it in response.
+                folder_path = os.path.join(MEDIA_ROOT, folder+".zip")
+
+                objects = s3_client.list_objects_v2(Bucket=obj.bucket_name, Prefix=folder+"/")
+                zip_file = zipfile.ZipFile(f'{folder_path}', 'w')
+
+                for file in objects.get("Contents", []):
+                    if 0 < file['Size'] <= (1024 * 1024):
+                        file_path = os.path.join(MEDIA_ROOT, file['Key'].split('/')[-1])
+                        s3_client.download_file(obj.bucket_name, file['Key'], file_path)
+                        zip_file.write(file_path, file['Key'])
+                        os.remove(file_path)
+                zip_file.close()
+                response = HttpResponse(content_type='application/zip')
+                response['Content-Disposition'] = f'attachment; filename="{folder}.zip"'
+                # Write the zip file data to the response
+                with open(folder_path, 'rb') as file:
+                    response.write(file.read())
+                os.remove(folder_path)
+                # Return the response
+                return response
         else:
             errors = form.errors
             return render(request, "aws/folders.html", {'form': form, 'errors': errors})

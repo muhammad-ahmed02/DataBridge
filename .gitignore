@@ -27,3 +27,6 @@ local_settings.py
 
 # Ignore database migrations
 /migrations/
+
+# ignore local db
+db.sqlite3

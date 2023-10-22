@@ -16,17 +16,18 @@ from decouple import config
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: don't run with debug turned on in production!
-# DEBUG = config('DEBUG', default=False, cast=bool)
-DEBUG = True
-# SECRET_KEY = config("SECRET_KEY") if DEBUG else os.getenv('SECRET_KEY')
-SECRET_KEY = os.getenv('SECRET_KEY')
-ALLOWED_HOSTS = ["the-data-bridge-c59f00b20f6f.herokuapp.com", "localhost"]
+try:
+    DEBUG = config('DEBUG', default=False, cast=bool)
+except Exception as e:
+    DEBUG = False
 
+SECRET_KEY = config("SECRET_KEY") if DEBUG else os.getenv('SECRET_KEY')
+
+ALLOWED_HOSTS = ["the-data-bridge-c59f00b20f6f.herokuapp.com", "localhost"]
 
 # Application definition
 
@@ -74,19 +75,18 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'data_bridge.wsgi.application'
 
-
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
-# if DEBUG:
-#     DATABASES = {
-#         'default': {
-#             'ENGINE': 'django.db.backends.sqlite3',
-#             'NAME': BASE_DIR / 'db.sqlite3',
-#         }
-#     }
-# else:
-django_on_heroku.settings(locals())
+if DEBUG:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
+else:
+    django_on_heroku.settings(locals())
 
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
@@ -106,7 +106,6 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
 # Internationalization
 # https://docs.djangoproject.com/en/4.2/topics/i18n/
 
@@ -118,21 +117,19 @@ USE_I18N = True
 
 USE_TZ = True
 
-
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 STATICFILES_DIRS = [
-    os.path.join(STATIC_ROOT, "static"),
-    '/var/www/static/',
+    os.path.join(STATIC_ROOT, "/"),
 ]
+
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 MEDIA_ROOT = str(BASE_DIR / "media")
 MEDIA_URL = "/media/"
-
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
