@@ -23,10 +23,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: don't run with debug turned on in production!
 # DEBUG = config('DEBUG', default=False, cast=bool)
-DEBUG = False
+DEBUG = True
 
-SECRET_KEY = config("SECRET_KEY") if DEBUG else os.getenv('SECRET_KEY')
-
+# SECRET_KEY = config("SECRET_KEY") if DEBUG else os.getenv('SECRET_KEY')
+SECRET_KEY = os.getenv('SECRET_KEY')
 ALLOWED_HOSTS = ["the-data-bridge-c59f00b20f6f.herokuapp.com", "localhost"]
 
 # Application definition
