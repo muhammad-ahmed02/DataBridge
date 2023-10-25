@@ -3,10 +3,15 @@ from django.urls import path, include, re_path
 from django.views.static import serve
 from django.conf import settings
 from django.conf.urls.static import static
+from django.contrib.auth.views import LoginView, LogoutView
+
+LoginView.template_name = 'aws/login.html'
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('aws.urls', namespace="home")),
+    path('login/', LoginView.as_view(), name='login'),
+    path('logout/', LogoutView.as_view(), name='logout'),
 
     # re_path(r"^static/(?P<path>.*)$", serve,
     #         {"document_root": settings.STATIC_ROOT}),

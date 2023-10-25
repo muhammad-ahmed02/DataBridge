@@ -19,10 +19,39 @@ Select Target
     </div>
     <div class="col-md-10 bg-light w-100 rounded p-3">
         <form method="post">
-            <h2 class="mb-4">Enter Snowflake Target Configurations</h2>
-            {% csrf_token %}
-            {{form.as_p}}
-            <button type="submit" class="btn btn-primary w-25">Submit</button>
+            <div class="row">
+                <div class="col-md-7 p-3">
+                    <h2 class="mb-4">Select Target</h2>
+                    {% for target in target_list %}
+                      <div class="card">
+                        <div class="card-header">
+                          Snowflake
+                        </div>
+                        <div class="card-body">
+                          <h5 class="card-title">Account: {{target.sfAccount}}</h5>
+                          <p class="card-text">
+                            <span>Url: {{target.sfUrl}}</span> <br />
+                            <span>User: {{target.sfUser}}</span> <br />
+                            <span>Password: {{target.sfPassword}}</span> <br />
+                            <span>Database: {{target.sfDatabase}}</span> <br />
+                            <span>Schema: {{target.sfSchema}}</span> <br />
+                            <span>Warehouse: {{target.sfWarehouse}}</span> <br />
+                            <span>Table: {{target.dbTable}}</span>
+                          </p>
+                          <a href="/{{obj.id}}/target/{{target.id}}" class="btn btn-primary">Go Write -></a>
+                        </div>
+                      </div>
+                    {% endfor %}
+                </div>
+                <div class="col-md-5 border-start border-1 border-success-border-opacity-50 p-3">
+                  <div id="displayData">
+                    <h2 class="mb-4">New Snowflake Target Configurations</h2>
+                    {% csrf_token %}
+                    {{form.as_p}}
+                    <button type="submit" class="btn btn-primary w-100">Save & Write -></button>
+                  </div>
+                </div>
+            </div>
         </form>
     </div>
 </div>

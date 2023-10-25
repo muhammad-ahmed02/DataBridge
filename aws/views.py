@@ -1,6 +1,5 @@
-import os
-
 from django.shortcuts import render, redirect, reverse
+from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse, HttpResponse
 import boto3 as bt
 import zipfile
@@ -11,6 +10,7 @@ from .models import S3Object
 from .utils import *
 
 
+@login_required
 def init_view(request):
     """
     View includes page for getting S3 Access and Secret Key to initialize the further operations.
@@ -22,7 +22,7 @@ def init_view(request):
             secret_key = form.cleaned_data["secret_key"]
             s3_client = bt.client('s3', aws_access_key_id=access_key, aws_secret_access_key=secret_key)
             if bool(s3_client.list_buckets()):
-                obj = S3Object.objects.create(access_key=access_key, secret_key=secret_key)
+                obj = S3Object.objects.create(client=request.user.id, access_key=access_key, secret_key=secret_key)
                 redirect_url = reverse("aws:bucket", args=[obj.id])
                 return redirect(redirect_url)
     else:
@@ -31,6 +31,7 @@ def init_view(request):
     return render(request, "aws/init.html", args)
 
 
+@login_required
 def bucket_view(request, obj_id):
     """
     View to save bucket name from the input of user into S3Object and performing further operations.
@@ -97,6 +98,7 @@ def create_zip_folder(files_path: list, files_name: list, folder_name=None) -> s
     return zip_folder_name
 
 
+@login_required
 def files_view(request, obj_id):
     """
     View for files display from S3 bucket selected in BucketView.
@@ -188,6 +190,7 @@ def find_folder_in_s3(con, bucket, table, ext) -> tuple:
     return False, "File too large to get schema! Try with files less than 1MB"
 
 
+@login_required
 def folders_view(request, obj_id):
     obj = S3Object.objects.get(id=obj_id)
     s3_client = bt.client('s3', aws_access_key_id=obj.access_key, aws_secret_access_key=obj.secret_key)
@@ -261,15 +264,26 @@ def folders_view(request, obj_id):
     return render(request, "aws/folders.html", args)
 
 
-def target_view(request, obj_id, types):
+@login_required
+def target_select_view(request, obj_id, types):
+    target_list = SnowflakeObject.objects.filter(client=request.user.id)
     s3_obj = S3Object.objects.get(id=obj_id)
     if request.method == 'POST':
         form = TargetForm(request.POST)
         if form.is_valid():
             # Process the form data
             obj = form.save()
-
+            return redirect(reverse("aws:target_writing", args=[s3_obj.id, obj.id]))
     else:
         form = TargetForm()
-    args = {'form': form, 'types': types, 'obj': s3_obj}
+    args = {"target_list": target_list, 'form': form, 'types': types, 'obj': s3_obj}
     return render(request, 'aws/target.html', args)
+
+
+@login_required
+def target_writing_view(request, obj_id, target_id):
+    obj = S3Object.objects.get(id=obj_id)
+    target = SnowflakeObject.objects.get(id=target_id)
+
+    args = {'target': target, 'obj': obj}
+    return render(request, "aws/target_writing.html", args)
