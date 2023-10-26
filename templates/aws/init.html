@@ -12,19 +12,33 @@
         </div>
         <div class="col-lg-6 bg-light d-flex align-items-center justify-content-center">
             <div class="container">
-                <h2 class="mb-4">Enter your AWS creds</h2>
-                <form method="post">
-                    {% csrf_token %}
-                    <div class="mb-3">
-                        <label for="access_key" class="form-label">Access Key:</label>
-                        {{form.access_key}}
+                <div class="d-flex flex-column row h-100 w-100 justify-content-center">
+                    {% if s3_objs %}
+                    <div class="col-md-6 w-100">
+                        <h2>Select previous S3 clients</h2>
+                        <ul>
+                            {% for s3_obj in s3_objs %}
+                            <li><a href="/{{s3_obj.id}}/bucket">{{s3_obj}}</a></li>
+                            {% endfor %}
+                        </ul>
                     </div>
-                    <div class="mb-3">
-                        <label for="secret_key" class="form-label">Secret Key:</label>
-                        {{form.secret_key}}
+                    {% endif %}
+                    <div class="col-md-6 w-100">
+                        <h2 class="mb-4">Enter new AWS creds</h2>
+                        <form method="post">
+                            {% csrf_token %}
+                            <div class="mb-3">
+                                <label for="access_key" class="form-label">Access Key:</label>
+                                {{form.access_key}}
+                            </div>
+                            <div class="mb-3">
+                                <label for="secret_key" class="form-label">Secret Key:</label>
+                                {{form.secret_key}}
+                            </div>
+                            <button type="submit" class="btn btn-secondary w-25">Start</button>
+                        </form>
                     </div>
-                    <button type="submit" class="btn btn-secondary w-25">Start</button>
-                </form>
+                </div>
             </div>
         </div>
     </div>

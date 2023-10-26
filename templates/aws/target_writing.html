@@ -5,5 +5,58 @@ Write to Target
 {% endblock %}
 
 {% block content %}
-<h1 class="text-light text-center">Work under progress!!</h1>
+<div class="container-fluid d-flex row bg-dark p-5">
+  <div class="col-md-2 w-100">
+        <h1 class="text-light">Select Target</h1>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="/" class="text-info">Start</a></li>
+                <li class="breadcrumb-item"><a href="/{{obj.id}}/bucket" class="text-info">Buckets</a></li>
+                <li class="breadcrumb-item"><a href="/{{obj.id}}/{{types}}" class="text-info">{% if types == 'files'%}Files{% else %}Folders{% endif %}</a></li>
+                <li class="breadcrumb-item"><a href="/{{obj.id}}/{{types}}/target" class="text-info">Targets</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Writing...</li>
+            </ol>
+        </nav>
+    </div>
+    <div class="col-md-10 bg-light w-100 rounded p-3">
+      <h2 class="mb-4">Writing on target...</h2>
+      <div id="schema-table">
+        <h5 class="mb-2">Schema for table on snowflake</h5>
+        <table class="table">
+          <thead>
+            <tr>
+              <th scope="col">Column</th>
+              <th scope="col">DataType</th>
+            </tr>
+          </thead>
+          <tbody>
+          </tbody>
+        </table>
+      </div>
+    </div>
+</div>
+
+<script>
+  function getSchema() {
+    $.ajax({
+      url: '/{{obj.id}}/get-schema/{{types}}/{{target.id}}/',
+      success: function(data) {
+        var tableBody = $('#schema-table tbody');
+        if ("{{types}}" == "files") {
+          var table = "{{obj.file_name}}"
+        } else {
+          var table = "{{obj.folder_name}}"
+        };
+        $.each(data[table], function(index, item) {
+          var row = $('<tr>');
+          row.append($('<td>').text(item.column));
+          row.append($('<td>').text(item.datatype));
+          tableBody.append(row);
+        });
+      }
+    });
+  }
+  window.onload = getSchema();
+
+</script>
 {% endblock %}

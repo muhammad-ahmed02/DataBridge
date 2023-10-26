@@ -6,6 +6,7 @@ from django.conf.urls.static import static
 from django.contrib.auth.views import LoginView, LogoutView
 
 LoginView.template_name = 'aws/login.html'
+LoginView.success_url = "/"
 
 urlpatterns = [
     path('admin/', admin.site.urls),

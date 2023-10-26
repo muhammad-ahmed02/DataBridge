@@ -128,6 +128,54 @@ def checkdtype(val) -> str:
     return datatype
 
 
+def find_files_in_s3(con, bucket, ext) -> list:
+    """
+    Function to get list of files in a bucket given from S3.
+    """
+    responses = con.list_objects_v2(Bucket=bucket)
+
+    files = list()
+    for response in responses.get("Contents", []):
+        var = response["Key"]
+        var_parts = var.split("/")
+        if len(var_parts) > 1:
+            continue
+        else:
+            if var.endswith(ext):
+                files.append(make_tuple(var, size=response['Size']))
+    return files
+
+
+def create_zip_folder(files_path: list, files_name: list, folder_name=None) -> str:
+    """
+    creating zip folder of given files in media folder.
+    """
+    default_zip_folder_name = 'file.zip'
+    zip_folder_name = folder_name+".zip" if folder_name else default_zip_folder_name
+    zip_file = zipfile.ZipFile(os.path.join(MEDIA_ROOT, zip_folder_name), 'w')
+
+    for path, name in zip(files_path, files_name):
+        zip_file.write(path, name)
+
+    zip_file.close()
+    return zip_folder_name
+
+
+def get_folder_schema_in_s3(con, bucket, table, ext) -> tuple:
+    """
+    Function to read schema of desired folder.
+        Schema will be read for the specific file in the folder matching the extension given.
+    """
+    files = con.list_objects_v2(Bucket=bucket, Prefix=table)
+    for file in sorted(files.get("Contents", []), key=lambda x: x['LastModified']):
+        if file['Key'].endswith(ext):
+            cond, df = get_file_df(con, bucket, table=file['Key'])
+            if cond:
+                schema = get_schema(df, file['Key'])
+                return cond, schema
+    return False, "File too large to get schema! Try with files less than 1MB"
+
+
 def get_schema(df: pd.DataFrame, table: str) -> dict:
     """
     returning schema of given DataFrame.
@@ -144,6 +192,30 @@ def get_schema(df: pd.DataFrame, table: str) -> dict:
     schema[table] = columns_list
     return schema
 
+
+def get_list(d):
+
+    if isinstance(d, list):
+        return d
+
+    for key, value in d.items():
+        if isinstance(value, dict):
+            return get_list(value)
+        else:
+            return value
+
+
+def convert_schema_sql(schema: dict):
+    """
+     Convert dict schema into string format for sql query.
+    """
+    schema = get_list(schema)
+    schema_sql = str()
+    for idx, scheme in enumerate(schema):
+        schema_sql += f"{scheme.get('column')} {scheme.get('datatype').upper()}"
+        if idx < len(schema)-1:
+            schema_sql += ", "
+    return schema_sql
 
 """
 Writing data in snowflake

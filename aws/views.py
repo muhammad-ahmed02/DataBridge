@@ -3,6 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse, HttpResponse
 import boto3 as bt
 import zipfile
+import snowflake.connector
 
 from data_bridge.settings import MEDIA_ROOT
 from .forms import *
@@ -15,6 +16,7 @@ def init_view(request):
     """
     View includes page for getting S3 Access and Secret Key to initialize the further operations.
     """
+    s3_objs = S3Object.objects.filter(client=request.user.id)
     if request.method == 'POST':
         form = InitializeForm(request.POST)
         if form.is_valid():
@@ -27,7 +29,7 @@ def init_view(request):
                 return redirect(redirect_url)
     else:
         form = InitializeForm()
-    args = {'form': form}
+    args = {'form': form, "s3_objs": s3_objs}
     return render(request, "aws/init.html", args)
 
 
@@ -63,39 +65,6 @@ def bucket_view(request, obj_id):
         form.set_buckets(buckets)
     args = {'form': form}
     return render(request, "aws/bucket.html", args)
-
-
-def find_files_in_s3(con, bucket, ext) -> list:
-    """
-    Function to get list of files in a bucket given from S3.
-    """
-    responses = con.list_objects_v2(Bucket=bucket)
-
-    files = list()
-    for response in responses.get("Contents", []):
-        var = response["Key"]
-        var_parts = var.split("/")
-        if len(var_parts) > 1:
-            continue
-        else:
-            if var.endswith(ext):
-                files.append(make_tuple(var, size=response['Size']))
-    return files
-
-
-def create_zip_folder(files_path: list, files_name: list, folder_name=None) -> str:
-    """
-    creating zip folder of given files in media folder.
-    """
-    default_zip_folder_name = 'file.zip'
-    zip_folder_name = folder_name+".zip" if folder_name else default_zip_folder_name
-    zip_file = zipfile.ZipFile(os.path.join(MEDIA_ROOT, zip_folder_name), 'w')
-
-    for path, name in zip(files_path, files_name):
-        zip_file.write(path, name)
-
-    zip_file.close()
-    return zip_folder_name
 
 
 @login_required
@@ -175,21 +144,6 @@ def files_view(request, obj_id):
     return render(request, "aws/files.html", args)
 
 
-def find_folder_in_s3(con, bucket, table, ext) -> tuple:
-    """
-    Function to read schema of desired folder.
-        Schema will be read for the specific file in the folder matching the extension given.
-    """
-    files = con.list_objects_v2(Bucket=bucket, Prefix=table)
-    for file in sorted(files.get("Contents", []), key=lambda x: x['LastModified']):
-        if file['Key'].endswith(ext):
-            cond, df = get_file_df(con, bucket, table=file['Key'])
-            if cond:
-                schema = get_schema(df, file['Key'])
-                return cond, schema
-    return False, "File too large to get schema! Try with files less than 1MB"
-
-
 @login_required
 def folders_view(request, obj_id):
     obj = S3Object.objects.get(id=obj_id)
@@ -217,14 +171,14 @@ def folders_view(request, obj_id):
             obj.folder_name = folder
             obj.save()
             if 'get_schema' in request.POST:
-                cond, schema = find_folder_in_s3(s3_client, obj.bucket_name, folder, obj.extension)
+                cond, schema = get_folder_schema_in_s3(s3_client, obj.bucket_name, folder, obj.extension)
                 if cond:
                     return render(request, "aws/folders.html",
                                   {'form': form, 'obj': obj, 'schema': schema})
                 error = schema
                 return render(request, "aws/folders.html", {'form': form, 'obj': obj, 'error': error})
             elif "export_schema" in request.POST:
-                cond, schema = find_folder_in_s3(s3_client, obj.bucket_name, folder, obj.extension)
+                cond, schema = get_folder_schema_in_s3(s3_client, obj.bucket_name, folder, obj.extension)
                 if cond:
                     response = JsonResponse(schema)
                     response['Content-Disposition'] = 'attachment; filename="schema.json"'
@@ -273,7 +227,7 @@ def target_select_view(request, obj_id, types):
         if form.is_valid():
             # Process the form data
             obj = form.save()
-            return redirect(reverse("aws:target_writing", args=[s3_obj.id, obj.id]))
+            return redirect(reverse("aws:target_writing", args=[s3_obj.id, obj.id, types]))
     else:
         form = TargetForm()
     args = {"target_list": target_list, 'form': form, 'types': types, 'obj': s3_obj}
@@ -281,9 +235,63 @@ def target_select_view(request, obj_id, types):
 
 
 @login_required
-def target_writing_view(request, obj_id, target_id):
+def target_writing_view(request, obj_id, target_id, types):
+    """
+    In this page we will perform complete ETL process.
+        1. Extract: get the table data from S3
+        2. Transform: Get the table schema and transform the data in order to write in Snowflake.
+        3. Load: Create Table in Snowflake with schema columns and load the transformed data.
+    """
     obj = S3Object.objects.get(id=obj_id)
     target = SnowflakeObject.objects.get(id=target_id)
 
-    args = {'target': target, 'obj': obj}
+    args = {'target': target, 'obj': obj, 'types': types}
     return render(request, "aws/target_writing.html", args)
+
+
+def extract_table(request, types, obj_id, target_id):
+    obj = S3Object.objects.get(id=obj_id)
+    target = SnowflakeObject.objects.get(id=target_id)
+
+    s3_client = bt.client('s3', aws_access_key_id=obj.access_key, aws_secret_access_key=obj.secret_key)
+    if types == "files":
+        source = obj.file_name
+        cond, df = get_file_df(con=s3_client, bucket=obj.bucket_name, table=source)
+        schema = get_schema(df, source) if cond else {source: "Not Found!"}
+    else:
+        source = obj.folder_name
+        cond, schema = get_folder_schema_in_s3(s3_client, obj.bucket_name, source, obj.extension)
+        if not cond:
+            schema = {source: "Not Found!"}
+            return JsonResponse(schema)
+
+    # creating table on snowflake
+    conn = snowflake.connector.connect(
+        account=target.sfAccount,
+        user=target.sfUser,
+        password=target.sfPassword,
+        database=target.sfDatabase,
+        schema=target.sfSchema,
+        warehouse=target.sfWarehouse,
+    )
+
+    conn.cursor().execute(f'USE DATABASE {target.sfDatabase}')
+    conn.cursor().execute(f'USE SCHEMA {target.sfSchema}')
+
+    if types == "files":
+        db_table = obj.file_name.replace(".", "_")
+    else:
+        db_table = obj.folder_name
+    columns = convert_schema_sql(schema=schema)
+
+    # Create a new table
+    create_table_command = f'CREATE TABLE IF NOT EXISTS {db_table} ({columns})'
+    conn.cursor().execute(create_table_command)
+
+    # Write the DataFrame to Snowflake using INSERT query
+    placeholders = ', '.join(['%s'] * len(df.columns))
+    query = f"INSERT INTO {db_table} ({', '.join(df.columns)}) VALUES ({placeholders})"
+    conn.cursor().executemany(query, df.values.tolist())
+    conn.close()
+    return JsonResponse(schema)
+

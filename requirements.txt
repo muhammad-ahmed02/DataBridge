@@ -18,9 +18,10 @@ six==1.16.0
 sqlparse==0.4.4
 typing_extensions==4.8.0
 tzdata==2023.3
-urllib3==2.0.6
+urllib3<=1.27
 whitenoise==6.6.0
 openpyxl==3.1.2
 fastavro==1.8.4
 fastparquet==2023.8.0
 lxml==4.9.3
+snowflake-connector-python~=3.3.1

@@ -30,15 +30,15 @@ Select Target
                         <div class="card-body">
                           <h5 class="card-title">Account: {{target.sfAccount}}</h5>
                           <p class="card-text">
-                            <span>Url: {{target.sfUrl}}</span> <br />
-                            <span>User: {{target.sfUser}}</span> <br />
-                            <span>Password: {{target.sfPassword}}</span> <br />
-                            <span>Database: {{target.sfDatabase}}</span> <br />
-                            <span>Schema: {{target.sfSchema}}</span> <br />
-                            <span>Warehouse: {{target.sfWarehouse}}</span> <br />
-                            <span>Table: {{target.dbTable}}</span>
+                            <span><strong>Url:</strong> {{target.sfUrl}}</span> <br />
+                            <span><strong>User:</strong> {{target.sfUser}}</span> <br />
+                            <span><strong>Password:</strong> {{target.sfPassword}}</span> <br />
+                            <span><strong>Database:</strong> {{target.sfDatabase}}</span> <br />
+                            <span><strong>Schema:</strong> {{target.sfSchema}}</span> <br />
+                            <span><strong>Warehouse:</strong> {{target.sfWarehouse}}</span> <br />
+                            <span><strong>Table:</strong> {{target.dbTable}}</span>
                           </p>
-                          <a href="/{{obj.id}}/target/{{target.id}}" class="btn btn-primary">Go Write -></a>
+                          <a href="/{{obj.id}}/target/{{target.id}}/{{types}}" class="btn btn-primary">Go Write -></a>
                         </div>
                       </div>
                     {% endfor %}
