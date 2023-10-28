@@ -176,6 +176,23 @@ def get_folder_schema_in_s3(con, bucket, table, ext) -> tuple:
     return False, "File too large to get schema! Try with files less than 1MB"
 
 
+def get_folder_df(con, bucket, table, ext) -> tuple:
+    """
+    Function to read schema of desired folder.
+        Schema will be read for the specific file in the folder matching the extension given.
+    """
+    files = con.list_objects_v2(Bucket=bucket, Prefix=table)
+    df = pd.DataFrame()
+    cond = False
+    for file in sorted(files.get("Contents", []), key=lambda x: x['LastModified']):
+        if file["Key"].endswith(ext):
+            cond, _df = get_file_df(con, bucket, table=file['Key'])
+            if cond:
+                df = pd.concat([df, _df])
+
+    return cond, df
+
+
 def get_schema(df: pd.DataFrame, table: str) -> dict:
     """
     returning schema of given DataFrame.

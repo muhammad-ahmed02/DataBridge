@@ -164,6 +164,20 @@ def folders_view(request, obj_id):
                     folders.append(new_folder)
 
     if request.method == "POST":
+        if 'ext' in request.POST:
+            extension_form = ExtensionSelect(request.POST)
+            if extension_form.is_valid():
+                form = FilesForm()
+                ext = extension_form.cleaned_data['ext'].ext
+                files = find_files_in_s3(s3_client, obj.bucket_name, ext)
+                form.set_files(files)
+                obj.extension = ext
+                obj.save()
+                return render(request, "aws/files.html",
+                              {'form': form, 'extension_form': extension_form, 'obj': obj})
+        else:
+            extension_form = ExtensionSelect(initial={'ext': obj.extension})
+
         form = FoldersForm(request.POST)
         form.set_folders(folders)
         if form.is_valid():
@@ -174,9 +188,10 @@ def folders_view(request, obj_id):
                 cond, schema = get_folder_schema_in_s3(s3_client, obj.bucket_name, folder, obj.extension)
                 if cond:
                     return render(request, "aws/folders.html",
-                                  {'form': form, 'obj': obj, 'schema': schema})
+                                  {'form': form, 'extension_form': extension_form, 'obj': obj, 'schema': schema})
                 error = schema
-                return render(request, "aws/folders.html", {'form': form, 'obj': obj, 'error': error})
+                return render(request, "aws/folders.html",
+                              {'form': form, 'extension_form': extension_form, 'obj': obj, 'error': error})
             elif "export_schema" in request.POST:
                 cond, schema = get_folder_schema_in_s3(s3_client, obj.bucket_name, folder, obj.extension)
                 if cond:
@@ -210,11 +225,14 @@ def folders_view(request, obj_id):
                 return redirect(redirect_url)
         else:
             errors = form.errors
-            return render(request, "aws/folders.html", {'form': form, 'errors': errors})
+            return render(request, "aws/folders.html",
+                          {'form': form, 'extension_form': extension_form, 'errors': errors})
     else:
         form = FoldersForm()
         form.set_folders(folders)
-    args = {'form': form, 'obj': obj}
+        extension_form = ExtensionSelect(initial={'ext': obj.extension})
+
+    args = {'form': form, 'extension_form': extension_form, 'obj': obj}
     return render(request, "aws/folders.html", args)
 
 
@@ -262,36 +280,40 @@ def extract_table(request, types, obj_id, target_id):
         source = obj.folder_name
         cond, schema = get_folder_schema_in_s3(s3_client, obj.bucket_name, source, obj.extension)
         if not cond:
-            schema = {source: "Not Found!"}
-            return JsonResponse(schema)
+            error = "Schema not found!"
+            return JsonResponse({source: error})
+        cond, df = get_folder_df(s3_client, obj.bucket_name, source, obj.extension)
 
-    # creating table on snowflake
-    conn = snowflake.connector.connect(
-        account=target.sfAccount,
-        user=target.sfUser,
-        password=target.sfPassword,
-        database=target.sfDatabase,
-        schema=target.sfSchema,
-        warehouse=target.sfWarehouse,
-    )
+    try:
+        # creating table on snowflake
+        conn = snowflake.connector.connect(
+            account=target.sfAccount,
+            user=target.sfUser,
+            password=target.sfPassword,
+            database=target.sfDatabase,
+            schema=target.sfSchema,
+            warehouse=target.sfWarehouse,
+        )
 
-    conn.cursor().execute(f'USE DATABASE {target.sfDatabase}')
-    conn.cursor().execute(f'USE SCHEMA {target.sfSchema}')
+        conn.cursor().execute(f'USE DATABASE {target.sfDatabase}')
+        conn.cursor().execute(f'USE SCHEMA {target.sfSchema}')
 
-    if types == "files":
-        db_table = obj.file_name.replace(".", "_")
-    else:
-        db_table = obj.folder_name
-    columns = convert_schema_sql(schema=schema)
+        if types == "files":
+            db_table = obj.file_name.replace(".", "_")
+        else:
+            db_table = obj.folder_name
+        columns = convert_schema_sql(schema=schema)
 
-    # Create a new table
-    create_table_command = f'CREATE TABLE IF NOT EXISTS {db_table} ({columns})'
-    conn.cursor().execute(create_table_command)
+        # Create a new table
+        create_table_command = f'CREATE TABLE IF NOT EXISTS {db_table} ({columns})'
+        conn.cursor().execute(create_table_command)
 
-    # Write the DataFrame to Snowflake using INSERT query
-    placeholders = ', '.join(['%s'] * len(df.columns))
-    query = f"INSERT INTO {db_table} ({', '.join(df.columns)}) VALUES ({placeholders})"
-    conn.cursor().executemany(query, df.values.tolist())
-    conn.close()
-    return JsonResponse(schema)
-
+        # Write the DataFrame to Snowflake using INSERT query
+        placeholders = ', '.join(['%s'] * len(df.columns))
+        query = f"INSERT INTO {db_table} ({', '.join(df.columns)}) VALUES ({placeholders})"
+        conn.cursor().executemany(query, df.values.tolist())
+        conn.close()
+        return JsonResponse(schema)
+    except Exception as e:
+        error = f"Error: {e}"
+        return JsonResponse({source: error})

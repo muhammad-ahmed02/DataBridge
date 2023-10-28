@@ -19,10 +19,17 @@ Write to Target
         </nav>
     </div>
     <div class="col-md-10 bg-light w-100 rounded p-3">
-      <h2 class="mb-4">Writing on target...</h2>
-      <div id="schema-table">
+      <h2 class="mb-4">Write on target...</h2>
+      <button class="btn btn-primary mb-3" onclick="getSchema()">Start</button>
+      <div id="schema-table" style="display: none;">
         <h5 class="mb-2">Schema for table on snowflake</h5>
-        <table class="table">
+        <div class="d-flex justify-content-center" id="loader" style="display: none;">
+          <div class="spinner-border" role="status">
+            <span class="visually-hidden">Loading...</span>
+          </div>
+        </div>
+        <div class="alert alert-danger" role="alert" id="error" style="display: none;"></div>
+        <table class="table" id="columns-table" style="display: none;">
           <thead>
             <tr>
               <th scope="col">Column</th>
@@ -38,25 +45,35 @@ Write to Target
 
 <script>
   function getSchema() {
+    $('#schema-table').show();
+    $('#loader').show();
     $.ajax({
       url: '/{{obj.id}}/get-schema/{{types}}/{{target.id}}/',
       success: function(data) {
+        $('#loader').hide();
         var tableBody = $('#schema-table tbody');
         if ("{{types}}" == "files") {
           var table = "{{obj.file_name}}"
         } else {
           var table = "{{obj.folder_name}}"
         };
-        $.each(data[table], function(index, item) {
-          var row = $('<tr>');
-          row.append($('<td>').text(item.column));
-          row.append($('<td>').text(item.datatype));
-          tableBody.append(row);
-        });
+
+        if (data[table].indexOf("Error:" !== -1)) {
+          $('#loader').hide();
+          $('#error').show();
+          $('#error').append(data[table]);
+        } else {
+          $('#columns-table').show();
+          $.each(data[table], function(index, item) {
+            var row = $('<tr>');
+            row.append($('<td>').text(item.column));
+            row.append($('<td>').text(item.datatype));
+            tableBody.append(row);
+          });
+        }
       }
     });
   }
-  window.onload = getSchema();
 
 </script>
 {% endblock %}
