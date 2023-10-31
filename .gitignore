@@ -7,6 +7,7 @@ data_bridge/__pycache__/
 # Ignore the virtual environment
 venv/
 data_bridge/.env
+venv_3.9/
 
 # Ignore IDE-specific files
 .vscode/

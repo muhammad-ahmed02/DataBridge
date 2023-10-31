@@ -67,7 +67,7 @@ class TargetForm(forms.ModelForm):
     class Meta:
         model = SnowflakeObject
         fields = ['sfUrl', 'sfAccount', 'sfUser', 'sfPassword',
-                  'sfDatabase', 'sfSchema', 'sfWarehouse', 'dbTable']
+                  'sfDatabase', 'sfSchema', 'sfWarehouse']
 
         widgets = {
             'sfUrl': forms.TextInput(attrs={'class': 'form-control', 'placeholder': "Snowflake Url"}),
@@ -77,5 +77,4 @@ class TargetForm(forms.ModelForm):
             'sfDatabase': forms.TextInput(attrs={'class': 'form-control', 'placeholder': "Database"}),
             'sfSchema': forms.TextInput(attrs={'class': 'form-control', 'placeholder': "Schema"}),
             'sfWarehouse': forms.TextInput(attrs={'class': 'form-control', 'placeholder': "Warehouse"}),
-            'dbTable': forms.TextInput(attrs={'class': 'form-control', 'placeholder': "Database Table"})
         }
