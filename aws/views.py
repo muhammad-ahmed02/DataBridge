@@ -312,17 +312,17 @@ def extract_table(request, types, obj_id, target_id):
 
     try:
         # creating table on snowflake
-        # conn = snowflake.connector.connect(
-        #     account=target.sfAccount,
-        #     user=target.sfUser,
-        #     password=target.sfPassword,
-        #     database=target.sfDatabase,
-        #     schema=target.sfSchema,
-        #     warehouse=target.sfWarehouse,
-        # )
-        #
-        # conn.cursor().execute(f'USE DATABASE {target.sfDatabase}')
-        # conn.cursor().execute(f'USE SCHEMA {target.sfSchema}')
+        conn = snowflake.connector.connect(
+            account=target.sfAccount,
+            user=target.sfUser,
+            password=target.sfPassword,
+            database=target.sfDatabase,
+            schema=target.sfSchema,
+            warehouse=target.sfWarehouse,
+        )
+
+        conn.cursor().execute(f'USE DATABASE {target.sfDatabase}')
+        conn.cursor().execute(f'USE SCHEMA {target.sfSchema}')
 
         if types == "files":
             db_table = obj.file_name.replace(".", "_")
@@ -331,14 +331,14 @@ def extract_table(request, types, obj_id, target_id):
         columns = convert_schema_sql(schema=schema)
 
         # Create a new table
-        # create_table_command = f'CREATE TABLE IF NOT EXISTS {db_table} ({columns})'
-        # conn.cursor().execute(create_table_command)
-        #
-        # # Write the DataFrame to Snowflake using INSERT query
-        # placeholders = ', '.join(['%s'] * len(df.columns))
-        # query = f"INSERT INTO {db_table} ({', '.join(df.columns)}) VALUES ({placeholders})"
-        # conn.cursor().executemany(query, df.values.tolist())
-        # conn.close()
+        create_table_command = f'CREATE TABLE IF NOT EXISTS {db_table} ({columns})'
+        conn.cursor().execute(create_table_command)
+
+        # Write the DataFrame to Snowflake using INSERT query
+        placeholders = ', '.join(['%s'] * len(df.columns))
+        query = f"INSERT INTO {db_table} ({', '.join(df.columns)}) VALUES ({placeholders})"
+        conn.cursor().executemany(query, df.values.tolist())
+        conn.close()
         return JsonResponse(schema)
     except Exception as e:
         error = f"Error: {e}"
