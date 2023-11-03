@@ -25,3 +25,4 @@ fastavro==1.8.4
 fastparquet==2023.8.0
 lxml==4.9.3
 snowflake-connector-python~=3.3.1
+cloudinary~=1.36.0

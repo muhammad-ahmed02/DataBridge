@@ -2,10 +2,8 @@ from django.shortcuts import render, redirect, reverse, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse, HttpResponse
 import boto3 as bt
-import zipfile
 import snowflake.connector
 
-from data_bridge.settings import MEDIA_ROOT
 from .forms import *
 from .models import S3Object
 from .utils import *

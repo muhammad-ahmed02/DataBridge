@@ -1,10 +1,12 @@
+from fastparquet import ParquetFile
 import io
 import os
-
+import zipfile
 import pandas as pd
 import re
 import fastavro
-from fastparquet import ParquetFile
+
+from data_bridge.settings import MEDIA_ROOT
 
 
 def has_special_characters(string: str) -> bool:
