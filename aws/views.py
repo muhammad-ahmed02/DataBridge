@@ -255,7 +255,7 @@ def target_select_view(request, obj_id, types):
         if form.is_valid():
             # Process the form data
             obj = form.save()
-            return redirect(reverse("aws:target_writing", args=[s3_obj.id, obj.id, types]))
+            return redirect(reverse("aws:target_writing", args=[s3_obj.id, types, obj.id]))
     else:
         form = TargetForm()
     args = {"target_list": target_list, 'form': form, 'types': types, 'obj': s3_obj}
