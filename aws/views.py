@@ -113,19 +113,19 @@ def files_view(request, obj_id):
                     response = JsonResponse(schema)
                     response['Content-Disposition'] = 'attachment; filename="schema.json"'
                     return response
-            elif "download" in request.POST:
-                file_path = os.path.join(MEDIA_ROOT, table)
-                s3_client.download_file(obj.bucket_name, table, file_path)
-                zip_folder = create_zip_folder([file_path], [table])
-                response = HttpResponse(content_type='application/zip')
-                response['Content-Disposition'] = f'attachment; filename="{zip_folder}"'
-                # Write the zip file data to the response
-                with open(os.path.join(MEDIA_ROOT, zip_folder), 'rb') as file:
-                    response.write(file.read())
-                os.remove(file_path)
-                os.remove(os.path.join(MEDIA_ROOT, zip_folder))
-                # Return the response
-                return response
+            # elif "download" in request.POST:
+            #     file_path = os.path.join(MEDIA_ROOT, table)
+            #     s3_client.download_file(obj.bucket_name, table, file_path)
+            #     zip_folder = create_zip_folder([file_path], [table])
+            #     response = HttpResponse(content_type='application/zip')
+            #     response['Content-Disposition'] = f'attachment; filename="{zip_folder}"'
+            #     # Write the zip file data to the response
+            #     with open(os.path.join(MEDIA_ROOT, zip_folder), 'rb') as file:
+            #         response.write(file.read())
+            #     os.remove(file_path)
+            #     os.remove(os.path.join(MEDIA_ROOT, zip_folder))
+            #     # Return the response
+            #     return response
             elif "write_to_target" in request.POST:
                 cond, df = get_file_df(con=s3_client, bucket=obj.bucket_name, table=table)
                 if cond:
@@ -201,28 +201,28 @@ def folders_view(request, obj_id):
                     response = JsonResponse(schema)
                     response['Content-Disposition'] = 'attachment; filename="schema.json"'
                     return response
-            elif "download" in request.POST:
-                # download folder from s3 and create zip file and return it in response.
-                folder_path = os.path.join(MEDIA_ROOT, folder+".zip")
-
-                objects = s3_client.list_objects_v2(Bucket=obj.bucket_name, Prefix=folder+"/")
-                zip_file = zipfile.ZipFile(f'{folder_path}', 'w')
-
-                for file in objects.get("Contents", []):
-                    if 0 < file['Size'] <= (1024 * 1024):
-                        file_path = os.path.join(MEDIA_ROOT, file['Key'].split('/')[-1])
-                        s3_client.download_file(obj.bucket_name, file['Key'], file_path)
-                        zip_file.write(file_path, file['Key'])
-                        os.remove(file_path)
-                zip_file.close()
-                response = HttpResponse(content_type='application/zip')
-                response['Content-Disposition'] = f'attachment; filename="{folder}.zip"'
-                # Write the zip file data to the response
-                with open(folder_path, 'rb') as file:
-                    response.write(file.read())
-                os.remove(folder_path)
-                # Return the response
-                return response
+            # elif "download" in request.POST:
+            #     # download folder from s3 and create zip file and return it in response.
+            #     folder_path = os.path.join(MEDIA_ROOT, folder+".zip")
+            #
+            #     objects = s3_client.list_objects_v2(Bucket=obj.bucket_name, Prefix=folder+"/")
+            #     zip_file = zipfile.ZipFile(f'{folder_path}', 'w')
+            #
+            #     for file in objects.get("Contents", []):
+            #         if 0 < file['Size'] <= (1024 * 1024):
+            #             file_path = os.path.join(MEDIA_ROOT, file['Key'].split('/')[-1])
+            #             s3_client.download_file(obj.bucket_name, file['Key'], file_path)
+            #             zip_file.write(file_path, file['Key'])
+            #             os.remove(file_path)
+            #     zip_file.close()
+            #     response = HttpResponse(content_type='application/zip')
+            #     response['Content-Disposition'] = f'attachment; filename="{folder}.zip"'
+            #     # Write the zip file data to the response
+            #     with open(folder_path, 'rb') as file:
+            #         response.write(file.read())
+            #     os.remove(folder_path)
+            #     # Return the response
+            #     return response
             elif "write_to_target" in request.POST:
                 cond, schema = get_folder_schema_in_s3(s3_client, obj.bucket_name, folder, obj.extension)
                 if cond:
