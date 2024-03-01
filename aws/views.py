@@ -1,4 +1,4 @@
-from django.shortcuts import render, redirect, reverse
+from django.shortcuts import render, redirect, reverse, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse, HttpResponse
 import boto3 as bt
@@ -129,8 +129,14 @@ def files_view(request, obj_id):
                 # Return the response
                 return response
             elif "write_to_target" in request.POST:
-                redirect_url = reverse('aws:target', args=[obj.id, "files"])
-                return redirect(redirect_url)
+                cond, df = get_file_df(con=s3_client, bucket=obj.bucket_name, table=table)
+                if cond:
+                    redirect_url = reverse('aws:target_select', args=[obj.id, "files"])
+                    return redirect(redirect_url)
+                else:
+                    error = df
+                    return render(request, "aws/files.html",
+                                  {"form": form, 'extension_form': extension_form, 'obj': obj, 'error': error})
         else:
             errors = form.errors
             return render(request, "aws/files.html",
@@ -167,13 +173,12 @@ def folders_view(request, obj_id):
         if 'ext' in request.POST:
             extension_form = ExtensionSelect(request.POST)
             if extension_form.is_valid():
-                form = FilesForm()
+                form = FoldersForm()
+                form.set_folders(folders)
                 ext = extension_form.cleaned_data['ext'].ext
-                files = find_files_in_s3(s3_client, obj.bucket_name, ext)
-                form.set_files(files)
                 obj.extension = ext
                 obj.save()
-                return render(request, "aws/files.html",
+                return render(request, "aws/folders.html",
                               {'form': form, 'extension_form': extension_form, 'obj': obj})
         else:
             extension_form = ExtensionSelect(initial={'ext': obj.extension})
@@ -221,8 +226,13 @@ def folders_view(request, obj_id):
                 # Return the response
                 return response
             elif "write_to_target" in request.POST:
-                redirect_url = reverse('aws:target', args=[obj.id, "folders"])
-                return redirect(redirect_url)
+                cond, schema = get_folder_schema_in_s3(s3_client, obj.bucket_name, folder, obj.extension)
+                if cond:
+                    redirect_url = reverse('aws:target_select', args=[obj.id, "folders"])
+                    return redirect(redirect_url)
+                error = schema
+                return render(request, "aws/folders.html",
+                              {'form': form, 'extension_form': extension_form, 'obj': obj, 'error': error})
         else:
             errors = form.errors
             return render(request, "aws/folders.html",
@@ -250,6 +260,21 @@ def target_select_view(request, obj_id, types):
         form = TargetForm()
     args = {"target_list": target_list, 'form': form, 'types': types, 'obj': s3_obj}
     return render(request, 'aws/target.html', args)
+
+
+@login_required
+def edit_target(request, target_id, obj_id, types):
+    target = get_object_or_404(SnowflakeObject, id=target_id)
+    s3_obj = S3Object.objects.get(id=obj_id)
+    if request.method == 'POST':
+        form = TargetForm(request.POST, instance=target)
+        if form.is_valid():
+            form.save()
+            return redirect(reverse("aws:target_select", args=[s3_obj.id, types]))
+    else:
+        form = TargetForm(instance=target)
+    args = {'form': form, 'obj': s3_obj, 'types': types, 'target': target}
+    return render(request, 'aws/target_edit.html', args)
 
 
 @login_required
@@ -281,22 +306,22 @@ def extract_table(request, types, obj_id, target_id):
         cond, schema = get_folder_schema_in_s3(s3_client, obj.bucket_name, source, obj.extension)
         if not cond:
             error = "Schema not found!"
-            return JsonResponse({source: error})
+            return JsonResponse({'error': str(error)}, status=500)
         cond, df = get_folder_df(s3_client, obj.bucket_name, source, obj.extension)
 
     try:
         # creating table on snowflake
-        conn = snowflake.connector.connect(
-            account=target.sfAccount,
-            user=target.sfUser,
-            password=target.sfPassword,
-            database=target.sfDatabase,
-            schema=target.sfSchema,
-            warehouse=target.sfWarehouse,
-        )
-
-        conn.cursor().execute(f'USE DATABASE {target.sfDatabase}')
-        conn.cursor().execute(f'USE SCHEMA {target.sfSchema}')
+        # conn = snowflake.connector.connect(
+        #     account=target.sfAccount,
+        #     user=target.sfUser,
+        #     password=target.sfPassword,
+        #     database=target.sfDatabase,
+        #     schema=target.sfSchema,
+        #     warehouse=target.sfWarehouse,
+        # )
+        #
+        # conn.cursor().execute(f'USE DATABASE {target.sfDatabase}')
+        # conn.cursor().execute(f'USE SCHEMA {target.sfSchema}')
 
         if types == "files":
             db_table = obj.file_name.replace(".", "_")
@@ -305,15 +330,15 @@ def extract_table(request, types, obj_id, target_id):
         columns = convert_schema_sql(schema=schema)
 
         # Create a new table
-        create_table_command = f'CREATE TABLE IF NOT EXISTS {db_table} ({columns})'
-        conn.cursor().execute(create_table_command)
-
-        # Write the DataFrame to Snowflake using INSERT query
-        placeholders = ', '.join(['%s'] * len(df.columns))
-        query = f"INSERT INTO {db_table} ({', '.join(df.columns)}) VALUES ({placeholders})"
-        conn.cursor().executemany(query, df.values.tolist())
-        conn.close()
+        # create_table_command = f'CREATE TABLE IF NOT EXISTS {db_table} ({columns})'
+        # conn.cursor().execute(create_table_command)
+        #
+        # # Write the DataFrame to Snowflake using INSERT query
+        # placeholders = ', '.join(['%s'] * len(df.columns))
+        # query = f"INSERT INTO {db_table} ({', '.join(df.columns)}) VALUES ({placeholders})"
+        # conn.cursor().executemany(query, df.values.tolist())
+        # conn.close()
         return JsonResponse(schema)
     except Exception as e:
         error = f"Error: {e}"
-        return JsonResponse({source: error})
+        return JsonResponse({'error': str(error)}, status=500)

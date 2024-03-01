@@ -24,8 +24,13 @@ Select Target
                     <h2 class="mb-4">Select Target</h2>
                     {% for target in target_list %}
                       <div class="card">
-                        <div class="card-header">
-                          Snowflake
+                        <div class="card-header d-flex flex-row justify-content-between align-items-center">
+                          <h4>Snowflake</h4>
+                          <button class="btn btn-sm" type="button">
+                            <a href="/{{obj.id}}/{{types}}/target/{{target.id}}">
+                              <i class="bi bi-pencil-square"></i>
+                            </a>
+                          </button>
                         </div>
                         <div class="card-body">
                           <h5 class="card-title">Account: {{target.sfAccount}}</h5>
@@ -36,9 +41,9 @@ Select Target
                             <span><strong>Database:</strong> {{target.sfDatabase}}</span> <br />
                             <span><strong>Schema:</strong> {{target.sfSchema}}</span> <br />
                             <span><strong>Warehouse:</strong> {{target.sfWarehouse}}</span> <br />
-                            <span><strong>Table:</strong> {{target.dbTable}}</span>
+                            <span><strong>Table:</strong> {% if types == 'files' %}{{obj.file_name}}{% else %}{{obj.folder_name}}{%endif%}</span>
                           </p>
-                          <a href="/{{obj.id}}/target/{{target.id}}/{{types}}" class="btn btn-primary">Go Write -></a>
+                          <a href="/{{obj.id}}/{{types}}/target/{{target.id}}/write" class="btn btn-primary">Go Write -></a>
                         </div>
                       </div>
                     {% endfor %}

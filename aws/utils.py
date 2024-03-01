@@ -206,7 +206,7 @@ def get_schema(df: pd.DataFrame, table: str) -> dict:
         column["datatype"] = checkdtype(df[col].dtype)
         columns_list.append(column)
 
-    schema[table] = columns_list
+    schema[table.split("/")[0]] = columns_list
     return schema
 
 

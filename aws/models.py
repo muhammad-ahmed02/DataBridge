@@ -38,7 +38,7 @@ class SnowflakeObject(models.Model):
     sfSchema = models.CharField(max_length=255)
     sfWarehouse = models.CharField(max_length=255)
 
-    dbTable = models.CharField(max_length=255, blank=True, null=True)
+    # dbTable = models.CharField(max_length=255, blank=True, null=True)
 
     def __str__(self):
         return self.sfAccount
