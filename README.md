@@ -38,6 +38,8 @@ This project is built with Python, and Django Rest Framework with HTML pages to 
 ## Usage
 
 To Use the project and see it in real time please refer to the [Website](https://the-data-bridge-c59f00b20f6f.herokuapp.com).
+Username: test
+Password: testuser123
 
 ## Authors
 
