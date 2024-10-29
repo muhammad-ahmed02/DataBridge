@@ -25,23 +25,15 @@
 
 ## About The Project
 
-The Data Bridge project showcases my expertise in data warehousing and ETL processing. The project involves moving data from AWS S3 to Snowflake using ETL processing. The ETL process is implemented using the Snowflake library in the Django framework. 
+The Data Bridge project showcases my expertise in data warehousing and ETL processing. The project involves moving data from AWS S3 to Snowflake using ETL processing. The ETL process is implemented using the Snowflake library in the Django framework.
 
-The project demonstrates how to move data from AWS S3 to an existing Snowflake table seamlessly, without manual intervention. The project uses a simple and practical approach to move data from AWS S3 to Snowflake, making it easy to understand and implement. 
+The project demonstrates how to move data from AWS S3 to an existing Snowflake table seamlessly, without manual intervention. The project uses a simple and practical approach to move data from AWS S3 to Snowflake, making it easy to understand and implement.
 
 The project is deployed on Heroku and is a great example of my skills and expertise in data engineering and software development.
 
 ## Built With
 
 This project is built with Python, and Django Rest Framework with HTML pages to showcase the work and demonstrate the flow of data.
-
-## Usage
-
-To Use the project and see it in real time please refer to the [Website](https://the-data-bridge-c59f00b20f6f.herokuapp.com).
-<br/>
-Username: test
-<br />
-Password: testuser123
 
 ## Authors
 
