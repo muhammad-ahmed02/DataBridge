@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Initialize{% endblock %}
+
+{% block content %}
+<div class="container-fluid" style="height: 100vh">
+    <div class="row h-100">
+        <div class="col-lg-6 bg-dark text-white d-flex flex-column align-items-center justify-content-center">
+            <img src="{% static 'logo.jpg' %}" alt="DataBridge logo" width="30%">
+            <h1 style="font-family: Inconsolata">Welcome to DataBridge</h1>
+        </div>
+        <div class="col-lg-6 bg-light d-flex align-items-center justify-content-center">
+            <div class="container">
+                <div class="d-flex flex-column row h-100 w-100 justify-content-center">
+                    {% if s3_objs %}
+                    <div class="col-md-6 w-100">
+                        <h2>Select previous S3 clients</h2>
+                        <ul>
+                            {% for s3_obj in s3_objs %}
+                            <li><a href="/{{s3_obj.id}}/bucket">{{s3_obj}}</a></li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    {% endif %}
+                    <div class="col-md-6 w-100">
+                        <h2 class="mb-4">Enter new AWS creds</h2>
+                        <form method="post">
+                            {% csrf_token %}
+                            <div class="mb-3">
+                                <label for="access_key" class="form-label">Access Key:</label>
+                                {{form.access_key}}
+                            </div>
+                            <div class="mb-3">
+                                <label for="secret_key" class="form-label">Secret Key:</label>
+                                {{form.secret_key}}
+                            </div>
+                            <button type="submit" class="btn btn-secondary w-25">Start</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

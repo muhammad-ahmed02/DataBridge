@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}
+Bucket
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid" style="height: 100vh">
+    <div class="row h-100">
+        <div class="col-lg-6 bg-dark text-white d-flex flex-column align-items-center justify-content-center">
+            <img src="{% static 'logo.jpg' %}" alt="DataBridge logo" width="30%">
+            <h1 style="font-family: Inconsolata">Welcome to DataBridge</h1>
+        </div>
+        <div class="col-lg-6 bg-light d-flex align-items-center justify-content-center">
+            <div class="container">
+                <h2 class="mb-4">Select Bucket</h2>
+                <nav aria-label="breadcrumb">
+                  <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="/">Start</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Buckets</li>
+                  </ol>
+                </nav>
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="{{form.bucket_name.id_for_label}}" class="form-label">{{form.bucket_name.label}}</label>
+                        {{form.bucket_name}}
+                    </div>
+                    <div class="mb-3">
+                        {{form.type}}
+                    </div>
+                    <div class="mb-3">
+                        <label for="{{form.extension.id_for_label}}" class="form-label">{{form.extension.label}}</label>
+                        {{form.extension}}
+                    </div>
+                    {% if errors %}
+                    <ul>
+                        {% for field, error_list in errors.items %}
+                        <li>{{ field }}:
+                            <ul>
+                                {% for error in error_list %}
+                                <li>{{ error }}</li>
+                                {% endfor %}
+                            </ul>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% endif %}
+                    <button type="submit" class="btn btn-secondary w-25">Proceed</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+
+<script>
+    $(document).ready(function() {
+        $('#id_type').on('input', function() {
+            if ($('#id_type_0')[0].checked) {
+                $('#id_extension').show();
+                $("label[for='id_extension']").show();
+            } else {
+                $('#id_extension').hide();
+                $("label[for='id_extension']").hide();
+            }
+        });
+    });
+</script>

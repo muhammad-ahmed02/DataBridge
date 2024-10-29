@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container-fluid d-flex d-flex-column justify-content-center align-items-center bg-dark p-5">
+  <div class="col-md-6 w-100">
+    <h1 class="text-light">Edit Target</h1>
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb">
+          <li class="breadcrumb-item"><a href="/" class="text-info">Start</a></li>
+          <li class="breadcrumb-item"><a href="/{{obj.id}}/bucket" class="text-info">Buckets</a></li>
+          <li class="breadcrumb-item"><a href="/{{obj.id}}/{{types}}" class="text-info">{% if types == 'files'%}Files{% else %}Folders{% endif %}</a></li>
+          <li class="breadcrumb-item"><a href="/{{obj.id}}/{{types}}/target" class="text-info">Targets</a></li>
+          <li class="breadcrumb-item active" aria-current="page">Edit</li>
+      </ol>
+    </nav>
+    <form method="post" class="bg-light p-3 rounded w-50">
+      {% csrf_token %}
+      {{ form.as_p }}
+      <button type="submit" class="btn btn-primary w-100">Save</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

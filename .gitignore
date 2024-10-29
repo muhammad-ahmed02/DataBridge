@@ -1,0 +1,34 @@
+# Ignore Python cache files
+__pycache__/
+data_bridge/__pycache__/
+*.pyc
+*.pyo
+
+# Ignore the virtual environment
+venv/
+data_bridge/.env
+venv_3.9/
+
+# Ignore IDE-specific files
+.vscode/
+.idea/
+
+# Ignore database files
+#db.sqlite3
+
+# Ignore log files
+*.log
+
+# Ignore local settings
+local_settings.py
+
+# Ignore environment files
+.env.*
+.DS_Store
+.env
+
+# Ignore database migrations
+/migrations/
+
+# ignore local db
+db.sqlite3

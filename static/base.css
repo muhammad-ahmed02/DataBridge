@@ -1,0 +1,6 @@
+{% load static %}
+
+@font-face {
+    font-family: 'Inconsolata'; /* Choose a name for your font-family */
+    src: url('{% static Inconsolata.ttf %}') format('ttf'), /* Replace with your font file path */
+}

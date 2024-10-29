@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+
+{% block title %}
+Folders
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid d-flex row bg-dark p-5">
+    <div class="col-md-2 w-100">
+        <div class="d-flex align-items-center row">
+            <div class="col-md-8">
+                <h1 class="text-light">Folders</h1>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="/" class="text-info">Start</a></li>
+                        <li class="breadcrumb-item"><a href="/{{obj.id}}/bucket" class="text-info">Buckets</a></li>
+                        <li class="breadcrumb-item active" aria-current="page">Folders</li>
+                    </ol>
+                </nav>
+            </div>
+            <div class="col-md-4 text-end">
+                <form method="post">
+                    {% csrf_token %}
+                    {{extension_form.as_p}}
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-10 bg-light w-100 rounded">
+        <form method="post">
+            <div class="row">
+                <div class="col-md-8 p-3">
+                    <h2 class="mb-4">Select Folder</h2>
+                    {% csrf_token %}
+                    {{ form.as_p }}
+                    {% if errors %}
+                    <ul>
+                        {% for field, error_list in errors.items %}
+                        <li>{{ field }}:
+                            <ul>
+                                {% for error in error_list %}
+                                <li>{{ error }}</li>
+                                {% endfor %}
+                            </ul>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% endif %}
+                    <button type="submit" class="btn btn-primary w-25" name="get_schema" value="get_schema">Get Schema</button>
+<!--                    <button type="submit" class="btn btn-secondary" name="download" value="download">Download File</button>-->
+                    <button type="submit" class="btn btn-secondary" name="write_to_target" value="write_to_target">Write to Target</button>
+                </div>
+                <div class="col-md-4 border-start border-1 border-success border-opacity-50 p-3">
+                    <!-- Right Side: Empty Space to Display Data -->
+                    <div id="displayData">
+                        <!-- Data will be displayed here later -->
+                        <h2 class="mb-4">Schema</h2>
+                        {% if error %}
+                        <div class="alert alert-danger" role="alert">
+                            {{ error }}
+                        </div>
+                        {% endif %}
+                        {% if schema %}
+                            {% for file, columns in schema.items %}
+                                <h5>{{file}}</h5>
+                                <table class="table">
+                                  <thead>
+                                    <tr>
+                                      <th scope="col">Column</th>
+                                      <th scope="col">DataType</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    {% for column in columns %}
+                                        <tr>
+                                            <td>{{ column.column }}</td>
+                                            <td>{{ column.datatype }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                  </tbody>
+                                </table>
+                                <button type="submit" class="btn btn-secondary" name="export_schema" value="export_schema">Export Schema</button>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

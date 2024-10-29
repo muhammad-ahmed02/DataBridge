@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+
+{% block title %}
+Select Target
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid d-flex row bg-dark p-5">
+    <div class="col-md-2 w-100">
+        <h1 class="text-light">Select Target</h1>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="/" class="text-info">Start</a></li>
+                <li class="breadcrumb-item"><a href="/{{obj.id}}/bucket" class="text-info">Buckets</a></li>
+                <li class="breadcrumb-item"><a href="/{{obj.id}}/{{types}}" class="text-info">{% if types == 'files'%}Files{% else %}Folders{% endif %}</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Target</li>
+            </ol>
+        </nav>
+    </div>
+    <div class="col-md-10 bg-light w-100 rounded p-3">
+        <form method="post">
+            <div class="row">
+                <div class="col-md-7 p-3">
+                    <h2 class="mb-4">Select Target</h2>
+                    {% for target in target_list %}
+                      <div class="card">
+                        <div class="card-header d-flex flex-row justify-content-between align-items-center">
+                          <h4>Snowflake</h4>
+                          <button class="btn btn-sm" type="button">
+                            <a href="/{{obj.id}}/{{types}}/target/{{target.id}}">
+                              <i class="bi bi-pencil-square"></i>
+                            </a>
+                          </button>
+                        </div>
+                        <div class="card-body">
+                          <h5 class="card-title">Account: {{target.sfAccount}}</h5>
+                          <p class="card-text">
+                            <span><strong>Url:</strong> {{target.sfUrl}}</span> <br />
+                            <span><strong>User:</strong> {{target.sfUser}}</span> <br />
+                            <span><strong>Password:</strong> {{target.sfPassword}}</span> <br />
+                            <span><strong>Database:</strong> {{target.sfDatabase}}</span> <br />
+                            <span><strong>Schema:</strong> {{target.sfSchema}}</span> <br />
+                            <span><strong>Warehouse:</strong> {{target.sfWarehouse}}</span> <br />
+                            <span><strong>Table:</strong> {% if types == 'files' %}{{obj.file_name}}{% else %}{{obj.folder_name}}{%endif%}</span>
+                          </p>
+                          <a href="/{{obj.id}}/{{types}}/target/{{target.id}}/write" class="btn btn-primary">Go Write -></a>
+                        </div>
+                      </div>
+                    {% endfor %}
+                </div>
+                <div class="col-md-5 border-start border-1 border-success-border-opacity-50 p-3">
+                  <div id="displayData">
+                    <h2 class="mb-4">New Snowflake Target Configurations</h2>
+                    {% csrf_token %}
+                    {{form.as_p}}
+                    <button type="submit" class="btn btn-primary w-100">Save & Write -></button>
+                  </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% endblock %}
